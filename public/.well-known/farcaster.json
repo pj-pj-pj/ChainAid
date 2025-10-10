@@ -1,0 +1,16 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "ChainLedger Donation Tracker",
+    "iconUrl": "https://usdozf7pplhxfvrl.public.blob.vercel-storage.com/thumbnail_5ea557a1-81af-46af-b27a-b095baef43fa-d1jFzH7zBWiIAMX6UHra6PORvCRm4k",
+    "homeUrl": "https://melted-kitchen-467.app.ohara.ai",
+    "imageUrl": "https://usdozf7pplhxfvrl.public.blob.vercel-storage.com/thumbnail_5ea557a1-81af-46af-b27a-b095baef43fa-d1jFzH7zBWiIAMX6UHra6PORvCRm4k",
+    "buttonTitle": "Open with Ohara",
+    "splashImageUrl": "https://usdozf7pplhxfvrl.public.blob.vercel-storage.com/farcaster/splash_images/splash_image1.svg",
+    "splashBackgroundColor": "#ffffff",
+    "tags": ["ohara", "mini-app", "base", "farcaster"],
+    "primaryCategory": "entertainment",
+    "ogTitle": "ChainLedger Donation Tracker",
+    "ogImageUrl": "https://usdozf7pplhxfvrl.public.blob.vercel-storage.com/thumbnail_5ea557a1-81af-46af-b27a-b095baef43fa-d1jFzH7zBWiIAMX6UHra6PORvCRm4k"
+  }
+}

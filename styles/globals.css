@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 30% 25%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 142 76% 36%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    /* Set default border color via the CSS variable instead of using @apply
+       because Tailwind may not recognize the "border-border" utility in
+       this context. */
+    border-color: hsl(var(--border));
+  }
+  body {
+    /* Use the CSS variables directly for background and text color to
+       avoid depending on generated utilities during @apply processing. */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  }
+
+  .border-glow {
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+  }
+
+  .card-glow {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.1);
+  }
+}
