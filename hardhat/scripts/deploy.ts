@@ -3,7 +3,7 @@ import { ethers as ethersLib } from "ethers";
 
 // The hardhat-ethers plugin may attach ethers either on `hre.ethers` or on `hre.network.ethers`.
 // Try both places to be robust across plugin versions and configurations.
-const ethers = ((hre as any).ethers ?? (hre as any).network?.ethers) as any;
+let ethers = ((hre as any).ethers ?? (hre as any).network?.ethers) as any;
 
 async function main() {
   // Debug: print available properties on the Hardhat runtime and network to see where ethers may be attached.
@@ -25,7 +25,7 @@ async function main() {
       const connEthers = (connection as any).ethers;
       if (connEthers) {
         console.log("Using connection.ethers");
-        (globalThis as any).__HARDHAT_CONNECTION__ = connection; // for debugging if needed
+        // Removed global variable assignment for debugging; use proper logging if needed.
         // override local ethers reference
         (ethers as any) = connEthers;
       } else {

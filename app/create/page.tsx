@@ -18,10 +18,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useWriteContract } from "wagmi";
+import { CONTRACT_ADDRESS } from "@/lib/contracts";
 import { parseEther } from "viem";
-import ChainAidABI from "@/abi/ChainAid.json";
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+import ChainAidABI from "@/abi/ChainAid.json";
+const contractAddress = CONTRACT_ADDRESS as `0x${string}`
 
 export default function CreateCampaignPage() {
 const { writeContractAsync } = useWriteContract();
@@ -61,7 +62,7 @@ const { writeContractAsync } = useWriteContract();
     const deadline = Math.floor(Date.now() / 1000) + durationDays * 24 * 60 * 60;
 
     const tx = await writeContractAsync({
-      address: CONTRACT_ADDRESS as `0x${string}`,
+      address: contractAddress,
       abi: (ChainAidABI as any).abi,
       functionName: "createCampaign",
       args: [
