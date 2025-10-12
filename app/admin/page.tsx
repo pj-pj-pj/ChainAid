@@ -1,308 +1,363 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, JSX } from "react";
+import { useAccount } from "wagmi";
+import { useAppStore } from "@/store/useAppStore";
+import { mockCampaigns } from "@/utils/mockData";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import RoleBadge from "@/components/RoleBadge";
-import {
-  UserPlus,
-  Settings,
   Shield,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
   Users,
-  Crown,
-  Trash2,
-  Sparkles,
+  DollarSign,
+  TrendingUp,
 } from "lucide-react";
+import { toast } from "sonner";
 
-interface TeamMember {
-  id: string;
-  address: string;
-  role: "Admin" | "Member" | "Donor" | "Viewer";
-  joinedDate: string;
-}
+export default function AdminPage() {
+  const { address, isConnected } = useAccount();
+  const { campaigns, setCampaigns } = useAppStore();
+  const [activeTab, setActiveTab] = useState("overview");
 
-export default function AdminPage(): React.JSX.Element {
-  const [newMemberAddress, setNewMemberAddress] = useState<string>("");
-  const [newMemberRole, setNewMemberRole] = useState<string>("");
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
-    {
-      id: "1",
-      address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb5",
-      role: "Admin",
-      joinedDate: "2024-01-15",
-    },
-    {
-      id: "2",
-      address: "0x8626f6940E2eb28930eFb4CeF49B2d1F2C9C1199",
-      role: "Member",
-      joinedDate: "2024-02-20",
-    },
-    {
-      id: "3",
-      address: "0xdD2FD4581271e230360230F9337D5c0430Bf44C0",
-      role: "Donor",
-      joinedDate: "2024-03-10",
-    },
-  ]);
+  useEffect(() => {
+    setCampaigns(mockCampaigns);
+  }, [setCampaigns]);
 
-  const roles = ["Admin", "Member", "Donor", "Viewer"];
+  // Mock admin check - in production, verify from smart contract
+  // const isAdmin =
+  //   address?.toLowerCase() ===
+  //   "0x7c480e6EaB4c0Df88BBE6EB5cf72a175d648115c".toLowerCase();
 
-  const handleAddMember = (): void => {
-    if (newMemberAddress && newMemberRole) {
-      const newMember: TeamMember = {
-        id: Date.now().toString(),
-        address: newMemberAddress,
-        role: newMemberRole as "Admin" | "Member" | "Donor" | "Viewer",
-        joinedDate: new Date().toISOString().split("T")[0],
-      };
-      setTeamMembers([...teamMembers, newMember]);
-      setNewMemberAddress("");
-      setNewMemberRole("");
-    }
+  const isAdmin = true; // For demo purposes, allow all connected users as admins
+
+  const pendingCampaigns = campaigns.filter((c) => c.status === "Pending");
+  const totalRaised = campaigns.reduce((sum, c) => sum + c.currentAmount, 0);
+  const totalDonors = campaigns.reduce((sum, c) => sum + c.supporterCount, 0);
+
+  const handleVerifyCampaign = (campaignId: string) => {
+    toast.success("Campaign verified successfully");
   };
 
-  const handleRemoveMember = (id: string): void => {
-    setTeamMembers(teamMembers.filter((member) => member.id !== id));
-  };
-
-  const formatAddress = (address: string): string => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  const handleRejectCampaign = (campaignId: string) => {
+    toast.error("Campaign rejected");
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-green-900/30 px-4 py-2 rounded-full border border-green-500/50 mb-4">
-            <Sparkles className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-medium text-green-400">
-              Admin Panel
-            </span>
+        <div className="mb-8 flex items-center space-x-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 to-green-600">
+            <Shield className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent mb-4">
-            Team Management
-          </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Manage campaign members, assign roles, and control access
-            permissions
-          </p>
+          <div>
+            <h1 className="text-4xl font-bold text-white">Admin Panel</h1>
+            <p className="mt-1 text-gray-400">
+              Manage campaigns and platform settings
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Add Member Form */}
-          <div className="lg:col-span-2">
-            <Card className="bg-gray-950/50 border-green-900/30 mb-8">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <UserPlus className="w-5 h-5 text-green-400" />
-                  <CardTitle className="text-xl text-green-50">
-                    Add Team Member
-                  </CardTitle>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="address"
-                    className="text-green-50"
-                  >
-                    Wallet Address
-                  </Label>
-                  <Input
-                    id="address"
-                    value={newMemberAddress}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setNewMemberAddress(e.target.value)
-                    }
-                    placeholder="0x..."
-                    className="bg-gray-900/50 border-green-900/30 text-green-50 placeholder:text-gray-500 focus:border-green-500 font-mono"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="role"
-                    className="text-green-50"
-                  >
-                    Role
-                  </Label>
-                  <Select
-                    value={newMemberRole}
-                    onValueChange={setNewMemberRole}
-                  >
-                    <SelectTrigger className="bg-gray-900/50 border-green-900/30 text-green-50 focus:border-green-500">
-                      <SelectValue placeholder="Select a role" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-950 border-green-900/30">
-                      {roles.map((role: string) => (
-                        <SelectItem
-                          key={role}
-                          value={role}
-                          className="text-green-50 focus:bg-green-900/20 focus:text-green-400"
-                        >
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button
-                  onClick={handleAddMember}
-                  disabled={!newMemberAddress || !newMemberRole}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold disabled:from-gray-700 disabled:to-gray-800 disabled:text-gray-500"
-                >
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Add Member
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Team Members List */}
-            <Card className="bg-gray-950/50 border-green-900/30">
-              <CardHeader>
+        {/* Access Control */}
+        {!isConnected ? (
+          <Alert className="border-yellow-500/50 bg-yellow-500/10">
+            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <AlertDescription className="text-yellow-500">
+              Please connect your wallet to access the admin panel
+            </AlertDescription>
+          </Alert>
+        ) : !isAdmin ? (
+          <Alert className="border-red-500/50 bg-red-500/10">
+            <XCircle className="h-4 w-4 text-red-500" />
+            <AlertDescription className="text-red-500">
+              Access denied. You don't have admin privileges.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <>
+            {/* Stats Overview */}
+            <div className="mb-8 grid gap-6 sm:grid-cols-3">
+              <Card className="border-gray-800 bg-gray-900 p-6">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-green-400" />
-                    <CardTitle className="text-xl text-green-50">
-                      Team Members
-                    </CardTitle>
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Total Raised
+                    </p>
+                    <h3 className="mt-2 text-3xl font-bold text-white">
+                      {totalRaised.toLocaleString()} ETH
+                    </h3>
                   </div>
-                  <Badge className="bg-green-900/30 text-green-400 border-green-500/50">
-                    {teamMembers.length} members
-                  </Badge>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
+                    <DollarSign className="h-7 w-7 text-white" />
+                  </div>
                 </div>
-              </CardHeader>
+              </Card>
 
-              <CardContent>
-                <div className="space-y-3">
-                  {teamMembers.map((member: TeamMember) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-gray-900/50 border border-green-900/20 hover:border-green-500/30 transition-all"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span className="font-mono text-sm text-green-400">
-                            {formatAddress(member.address)}
-                          </span>
-                          <RoleBadge role={member.role} />
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Joined{" "}
-                          {new Date(member.joinedDate).toLocaleDateString()}
-                        </p>
-                      </div>
+              <Card className="border-gray-800 bg-gray-900 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Total Campaigns
+                    </p>
+                    <h3 className="mt-2 text-3xl font-bold text-white">
+                      {campaigns.length}
+                    </h3>
+                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
+                    <TrendingUp className="h-7 w-7 text-white" />
+                  </div>
+                </div>
+              </Card>
 
-                      <Button
-                        onClick={(): void => handleRemoveMember(member.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+              <Card className="border-gray-800 bg-gray-900 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">
+                      Total Donors
+                    </p>
+                    <h3 className="mt-2 text-3xl font-bold text-white">
+                      {totalDonors}
+                    </h3>
+                  </div>
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
+                    <Users className="h-7 w-7 text-white" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Tabs */}
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+            >
+              <TabsList className="border-gray-800 bg-gray-900">
+                <TabsTrigger
+                  value="overview"
+                  className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
+                >
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="verification"
+                  className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
+                >
+                  Campaign Verification
+                  {pendingCampaigns.length > 0 && (
+                    <Badge className="ml-2 bg-green-500 text-white">
+                      {pendingCampaigns.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="ngos"
+                  className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-400"
+                >
+                  Manage NGOs
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent
+                value="overview"
+                className="mt-6"
+              >
+                <Card className="border-gray-800 bg-gray-900 p-6">
+                  <h3 className="mb-4 text-lg font-bold text-white">
+                    Recent Activity
+                  </h3>
+                  <div className="space-y-4">
+                    {campaigns.slice(0, 5).map((campaign) => (
+                      <div
+                        key={campaign.id}
+                        className="flex items-center justify-between border-b border-gray-800 pb-4"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Role Permissions */}
-            <Card className="bg-gray-950/50 border-green-900/30">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-green-400" />
-                  <CardTitle className="text-lg text-green-50">
-                    Role Permissions
-                  </CardTitle>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Crown className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-50 text-sm mb-1">
-                        Admin
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Full control: manage members, approve expenses, create
-                        campaigns
-                      </p>
-                    </div>
+                        <div>
+                          <p className="font-medium text-white">
+                            {campaign.title}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {campaign.creatorOrganization ||
+                              campaign.creatorAddress}
+                          </p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={
+                            campaign.verified
+                              ? "border-green-500/50 bg-green-500/20 text-green-400"
+                              : "border-yellow-500/50 bg-yellow-500/20 text-yellow-400"
+                          }
+                        >
+                          {campaign.verified ? "Verified" : "Pending"}
+                        </Badge>
+                      </div>
+                    ))}
                   </div>
+                </Card>
+              </TabsContent>
 
-                  <div className="flex items-start gap-3">
-                    <Settings className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-50 text-sm mb-1">
-                        Member
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Can log expenses and view campaign details
-                      </p>
+              <TabsContent
+                value="verification"
+                className="mt-6"
+              >
+                <Card className="border-gray-800 bg-gray-900 p-6">
+                  <h3 className="mb-4 text-lg font-bold text-white">
+                    Campaigns Awaiting Verification
+                  </h3>
+                  {pendingCampaigns.length === 0 ? (
+                    <p className="py-8 text-center text-gray-400">
+                      No campaigns pending verification
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {pendingCampaigns.map((campaign) => (
+                        <Card
+                          key={campaign.id}
+                          className="border-gray-800 bg-gray-950 p-4"
+                        >
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-white">
+                                {campaign.title}
+                              </h4>
+                              <p className="mt-1 text-sm text-gray-400">
+                                {campaign.creatorOrganization}
+                              </p>
+                              <Badge
+                                variant="outline"
+                                className="mt-2 border-green-500/50 bg-green-500/10 text-green-400"
+                              >
+                                {campaign.category}
+                              </Badge>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleVerifyCampaign(campaign.id)
+                                }
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="mr-1 h-4 w-4" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleRejectCampaign(campaign.id)
+                                }
+                                className="border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                              >
+                                <XCircle className="mr-1 h-4 w-4" />
+                                Reject
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))}
                     </div>
-                  </div>
+                  )}
+                </Card>
+              </TabsContent>
 
-                  <div className="flex items-start gap-3">
-                    <Users className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-50 text-sm mb-1">
-                        Donor
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        View-only access with donation history
-                      </p>
-                    </div>
+              <TabsContent
+                value="ngos"
+                className="mt-6"
+              >
+                <Card className="border-gray-800 bg-gray-900 p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-white">
+                      Verified NGOs
+                    </h3>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+                          Add NGO
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="border-gray-800 bg-gray-900 text-white">
+                        <DialogHeader>
+                          <DialogTitle>Add Verified NGO</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label
+                              htmlFor="ngo-name"
+                              className="text-white"
+                            >
+                              NGO Name
+                            </Label>
+                            <Input
+                              id="ngo-name"
+                              placeholder="Enter NGO name"
+                              className="mt-2 border-gray-800 bg-gray-950 text-white"
+                            />
+                          </div>
+                          <div>
+                            <Label
+                              htmlFor="ngo-address"
+                              className="text-white"
+                            >
+                              Wallet Address
+                            </Label>
+                            <Input
+                              id="ngo-address"
+                              placeholder="0x..."
+                              className="mt-2 border-gray-800 bg-gray-950 text-white"
+                            />
+                          </div>
+                          <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
+                            Add NGO
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-
-                  <div className="flex items-start gap-3">
-                    <Shield className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-green-50 text-sm mb-1">
-                        Viewer
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Read-only access to public data
-                      </p>
-                    </div>
+                  <div className="space-y-4">
+                    {campaigns
+                      .filter((c) => c.verified)
+                      .map((campaign) => (
+                        <div
+                          key={campaign.id}
+                          className="flex items-center justify-between border-b border-gray-800 pb-4"
+                        >
+                          <div>
+                            <p className="font-medium text-white">
+                              {campaign.creatorOrganization ||
+                                campaign.creatorAddress}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {campaign.creatorAddress}
+                            </p>
+                          </div>
+                          <Badge className="border-green-500/50 bg-green-500/20 text-green-400">
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            Verified
+                          </Badge>
+                        </div>
+                      ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Info Card */}
-            <Card className="bg-green-950/20 border-green-900/30">
-              <CardContent className="p-6">
-                <Shield className="w-8 h-8 text-green-400 mb-3" />
-                <h3 className="font-semibold text-green-50 mb-2">
-                  On-Chain Access Control
-                </h3>
-                <p className="text-sm text-gray-400">
-                  All role assignments are recorded on-chain for transparency
-                  and security
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </div>
     </div>
   );

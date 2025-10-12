@@ -29,6 +29,8 @@ interface AppState {
   removeMember: (campaignId: string, address: string) => void;
   addTransaction: (transaction: Transaction) => void;
   updateGlobalStats: (stats: Partial<GlobalStats>) => void;
+  setCampaigns: (campaigns: Campaign[]) => void;
+  setDonations: (donations: Donation[]) => void;
 
   // Getters
   getCampaignById: (id: string) => Campaign | undefined;
@@ -54,6 +56,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     totalDonors: 0,
     totalExpenses: 0,
   },
+
+  setDonations: (donations: Donation[]) => set({ donations }),
 
   addCampaign: (campaign: Campaign) =>
     set((state: AppState) => ({
@@ -200,6 +204,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateGlobalStats: (stats: Partial<GlobalStats>) =>
     set((state: AppState) => ({
       globalStats: { ...state.globalStats, ...stats },
+    })),
+
+  setCampaigns: (campaigns: Campaign[]) =>
+    set((state: AppState) => ({
+      campaigns,
     })),
 
   getCampaignById: (id: string) => {

@@ -10,6 +10,7 @@ interface StatCardProps {
   icon: LucideIcon;
   trend?: string;
   description?: string;
+  trendUp?: boolean;
 }
 
 export default function StatCard({
@@ -17,6 +18,7 @@ export default function StatCard({
   value,
   icon: Icon,
   trend,
+  trendUp,
   description,
 }: StatCardProps): JSX.Element {
   return (
@@ -30,7 +32,13 @@ export default function StatCard({
               <p className="text-xs text-gray-500 mt-1">{description}</p>
             )}
             {trend && (
-              <p className="text-xs text-green-500 mt-2 font-medium">{trend}</p>
+              <p
+                className={`mt-2 text-sm ${
+                  trendUp ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {trend}
+              </p>
             )}
           </div>
           <div className="w-12 h-12 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg flex items-center justify-center border border-green-500/30">

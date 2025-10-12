@@ -30,6 +30,7 @@ export const mockCampaigns: Campaign[] = [
       "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=400&fit=crop",
     totalExpenses: 12000,
     remainingBalance: 23000,
+    donors: 125,
   },
   {
     id: "2",
@@ -53,6 +54,7 @@ export const mockCampaigns: Campaign[] = [
       "https://images.unsplash.com/photo-1593113598332-cd288d649433?w=800&h=400&fit=crop",
     totalExpenses: 8500,
     remainingBalance: 14000,
+    donors: 89,
   },
   {
     id: "3",
@@ -76,6 +78,7 @@ export const mockCampaigns: Campaign[] = [
       "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&h=400&fit=crop",
     totalExpenses: 0,
     remainingBalance: 15000,
+    donors: 32,
   },
   {
     id: "4",
@@ -99,6 +102,7 @@ export const mockCampaigns: Campaign[] = [
       "https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=800&h=400&fit=crop",
     totalExpenses: 38000,
     remainingBalance: 2000,
+    donors: 156,
   },
 ];
 
@@ -138,6 +142,7 @@ export const mockDonations: Donation[] = [
     txHash: "0xabc123def456...",
     nftMinted: true,
     ensName: "donor1.eth",
+    campaignTitle: "Clean Water Initiative for Rural Communities",
   },
   {
     id: "d2",
@@ -147,6 +152,7 @@ export const mockDonations: Donation[] = [
     timestamp: "2025-01-22T09:45:00Z",
     txHash: "0xdef456ghi789...",
     nftMinted: false,
+    campaignTitle: "Clean Water Initiative for Rural Communities",
   },
   {
     id: "d3",
@@ -158,6 +164,7 @@ export const mockDonations: Donation[] = [
     txHash: "0xghi789jkl012...",
     nftMinted: true,
     ensName: "generous.eth",
+    campaignTitle: "Emergency Food Relief Program",
   },
 ];
 

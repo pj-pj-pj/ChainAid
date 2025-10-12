@@ -24,8 +24,10 @@ export default function Navigation(): JSX.Element {
 
   const navLinks: Array<{ href: string; label: string }> = [
     { href: "/explore", label: "Explore" },
+    { href: "/my-contributions", label: "My Contributions" },
     { href: "/create", label: "Create Campaign" },
-    { href: "/admin", label: "Admin" },
+    { href: "/my-campaigns", label: "My Campaigns" },
+    { href: "/admin", label: "Admin Panel" },
   ];
 
   const isActive = (href: string): boolean => pathname === href;

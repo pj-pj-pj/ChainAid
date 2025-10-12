@@ -20,9 +20,11 @@ export interface Campaign {
   pledgedSupport: number;
   supportGoal: number;
   creatorAddress: string;
+  creatorOrganization?: string;
   documents?: string[]; // IPFS hashes
   totalExpenses: number;
   remainingBalance: number;
+  donors: number;
 }
 
 export interface Supporter {
@@ -44,6 +46,7 @@ export interface Donation {
   txHash: string;
   nftMinted?: boolean;
   ensName?: string;
+  campaignTitle: string;
 }
 
 export interface Expense {

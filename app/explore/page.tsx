@@ -1,143 +1,155 @@
 "use client";
 
-import { useState, useMemo, JSX } from "react";
-import CampaignCard from "@/components/CampaignCard";
-import SearchBar from "@/components/SearchBar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect, JSX } from "react";
+import { useAppStore } from "@/store/useAppStore";
 import { mockCampaigns } from "@/utils/mockData";
-import type { Campaign } from "@/types";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import CampaignCard from "@/components/CampaignCard";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
 
-export default function ExplorePage(): JSX.Element {
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [categoryFilter, setCategoryFilter] = useState<string>("All");
+export default function ExplorePage() {
+  const { campaigns, setCampaigns } = useAppStore();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
 
-  const statuses = ["All", "Active", "Pending", "Completed"];
+  useEffect(() => {
+    setCampaigns(mockCampaigns);
+  }, [setCampaigns]);
+
   const categories = [
-    "All",
-    "Education",
-    "Healthcare",
-    "Environment",
-    "Disaster Relief",
-    "Animal Welfare",
+    "all",
+    ...Array.from(new Set(mockCampaigns.map((c) => c.category))),
   ];
 
-  const filteredCampaigns = useMemo(() => {
-    return mockCampaigns.filter((campaign: Campaign) => {
-      const matchesSearch =
-        campaign.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        campaign.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        statusFilter === "All" || campaign.status === statusFilter;
-      const matchesCategory =
-        categoryFilter === "All" || campaign.category === categoryFilter;
-
-      return matchesSearch && matchesStatus && matchesCategory;
-    });
-  }, [searchQuery, statusFilter, categoryFilter]);
+  const filteredCampaigns = campaigns.filter((campaign) => {
+    const matchesSearch =
+      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || campaign.category === selectedCategory;
+    const matchesStatus =
+      selectedStatus === "all" || campaign.status === selectedStatus;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent mb-4">
-            Explore Campaigns
-          </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
-            Discover transparent, community-verified campaigns making real
-            impact on Base
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white">All Campaigns</h1>
+          <p className="mt-2 text-gray-400">
+            Explore verified campaigns and make a difference
           </p>
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <SearchBar
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search campaigns..."
-          />
-
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2 text-green-400">
-              <SlidersHorizontal className="w-4 h-4" />
-              <span className="text-sm font-medium">Filters:</span>
-            </div>
-
-            {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-500" />
-              <div className="flex flex-wrap gap-2">
-                {statuses.map((status: string) => (
-                  <Badge
-                    key={status}
-                    onClick={(): void => setStatusFilter(status)}
-                    className={`cursor-pointer transition-all ${
-                      statusFilter === status
-                        ? "bg-green-900/50 text-green-400 border-green-500"
-                        : "bg-gray-900/50 text-gray-400 border-gray-700 hover:border-green-500/50"
-                    }`}
-                  >
-                    {status}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category: string) => (
-                <Button
-                  key={category}
-                  onClick={(): void => setCategoryFilter(category)}
-                  variant="outline"
-                  size="sm"
-                  className={`${
-                    categoryFilter === category
-                      ? "bg-green-900/30 text-green-400 border-green-500/50"
-                      : "bg-gray-900/30 text-gray-400 border-gray-700 hover:border-green-500/50 hover:text-green-400"
-                  }`}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+        <div className="mb-8 flex gap-4 ">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search campaigns..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border-gray-800 bg-gray-950 pl-10 text-white placeholder:text-gray-500 focus:border-indigo-500"
+            />
           </div>
+
+          <Select
+            value={selectedCategory}
+            onValueChange={setSelectedCategory}
+          >
+            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-indigo-500">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent className="border-gray-800 bg-gray-950 text-white">
+              {categories.map((category) => (
+                <SelectItem
+                  key={category}
+                  value={category}
+                  className="text-white hover:bg-gray-800"
+                >
+                  {category === "all" ? "All Categories" : category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={selectedStatus}
+            onValueChange={setSelectedStatus}
+          >
+            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-indigo-500">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="border-gray-800 bg-gray-950 text-white">
+              <SelectItem
+                value="pending"
+                className="text-white hover:bg-gray-800"
+              >
+                Pending
+              </SelectItem>
+              <SelectItem
+                value="all"
+                className="text-white hover:bg-gray-800"
+              >
+                All Status
+              </SelectItem>
+              <SelectItem
+                value="active"
+                className="text-white hover:bg-gray-800"
+              >
+                Active
+              </SelectItem>
+              <SelectItem
+                value="completed"
+                className="text-white hover:bg-gray-800"
+              >
+                Completed
+              </SelectItem>
+              <SelectItem
+                value="cancelled"
+                className="text-white hover:bg-gray-800"
+              >
+                Cancelled
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Results Count */}
-        <div className="mb-6">
-          <p className="text-gray-400">
-            Found{" "}
-            <span className="text-green-400 font-semibold">
-              {filteredCampaigns.length}
-            </span>{" "}
-            campaigns
+        <div className="mb-4">
+          <p className="text-sm text-gray-400">
+            Showing {filteredCampaigns.length} campaign
+            {filteredCampaigns.length !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* Campaigns Grid */}
-        {filteredCampaigns.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCampaigns.map((campaign: Campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 bg-gray-900/50 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-900/30">
-              <Filter className="w-8 h-8 text-gray-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-400 mb-2">
-              No campaigns found
-            </h3>
-            <p className="text-gray-500">
-              Try adjusting your filters or search query
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredCampaigns.map((campaign) => (
+            <CampaignCard
+              key={campaign.id}
+              campaign={campaign}
+            />
+          ))}
+        </div>
+
+        {/* No Results */}
+        {filteredCampaigns.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <p className="text-lg text-gray-400">No campaigns found</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Try adjusting your filters
             </p>
           </div>
         )}
