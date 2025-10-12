@@ -17,8 +17,16 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useWriteContract } from "wagmi";
+import { CONTRACT_ADDRESS } from "@/lib/contracts";
+import { parseEther } from "viem";
+
+import ChainAidABI from "@/abi/ChainAid.json";
+const contractAddress = CONTRACT_ADDRESS as `0x${string}`
 
 export default function CreateCampaignPage() {
+const { writeContractAsync } = useWriteContract();
+
   const { address, isConnected } = useAccount();
   const [formData, setFormData] = useState({
     title: "",
@@ -41,37 +49,51 @@ export default function CreateCampaignPage() {
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  if (!isConnected) {
+    toast.error("Please connect your wallet first");
+    return;
+  }
 
-    if (!isConnected) {
-      toast.error("Please connect your wallet first");
-      return;
-    }
+  setIsSubmitting(true);
+  try {
+    const goalAmountInWei = parseEther(formData.goal); // ETH to Wei
+    const durationDays = Number(formData.duration);
+    const deadline = Math.floor(Date.now() / 1000) + durationDays * 24 * 60 * 60;
 
-    setIsSubmitting(true);
+    const tx = await writeContractAsync({
+      address: contractAddress,
+      abi: (ChainAidABI as any).abi,
+      functionName: "createCampaign",
+      args: [
+        formData.title,
+        formData.description,
+        goalAmountInWei,
+        BigInt(deadline),
+        formData.category,
+        formData.image || "", // IPFS hash or image URL
+      ],
+      // parseEther from viem returns bigint; cast to any to satisfy Wagmi/Viem typing here
+      value: (parseEther("0.0001") as any), // creation fee
+    });
 
-    try {
-      // Simulate campaign creation with 0.0001 ETH fee
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      toast.success("Campaign created successfully!");
-
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        organization: "",
-        category: "",
-        goal: "",
-        duration: "",
-        image: "",
-      });
-    } catch (error) {
-      toast.error("Failed to create campaign");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    toast.success(`Campaign created successfully! Tx: ${tx}`);
+    setFormData({
+      title: "",
+      description: "",
+      organization: "",
+      category: "",
+      goal: "",
+      duration: "",
+      image: "",
+    });
+  } catch (err: any) {
+    console.error(err);
+    toast.error("Failed to create campaign");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
