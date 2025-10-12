@@ -57,7 +57,7 @@ export default function MyContributionsPage() {
                       {totalDonated.toFixed(4)} ETH
                     </h3>
                   </div>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
                     <Heart className="h-7 w-7 text-white" />
                   </div>
                 </div>
@@ -73,7 +73,7 @@ export default function MyContributionsPage() {
                       {campaignsSupported}
                     </h3>
                   </div>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
                     <TrendingUp className="h-7 w-7 text-white" />
                   </div>
                 </div>
@@ -89,7 +89,7 @@ export default function MyContributionsPage() {
                       {myDonations.length}
                     </h3>
                   </div>
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-green-600">
                     <Heart className="h-7 w-7 text-white" />
                   </div>
                 </div>
@@ -126,7 +126,7 @@ export default function MyContributionsPage() {
                         <div className="mt-2 flex items-center space-x-2">
                           <Badge
                             variant="outline"
-                            className="border-indigo-500/50 bg-indigo-500/10 text-indigo-400"
+                            className="border-green-500/50 bg-green-500/10 text-green-400"
                           >
                             {donation.amount} ETH
                           </Badge>
@@ -134,7 +134,7 @@ export default function MyContributionsPage() {
                             href={`https://basescan.org/tx/${donation.txHash}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-gray-400 hover:text-indigo-400"
+                            className="text-xs text-gray-400 hover:text-green-400"
                           >
                             <div className="flex items-center space-x-1">
                               <span>View Transaction</span>
@@ -145,7 +145,7 @@ export default function MyContributionsPage() {
                       </div>
                       <Button
                         variant="outline"
-                        className="border-gray-800 bg-gray-950 text-white hover:border-indigo-500 hover:bg-gray-800"
+                        className="border-gray-800 bg-gray-950 text-white hover:border-green-500 hover:bg-gray-800"
                         onClick={() =>
                           window.open(
                             `/campaign/${donation.campaignId}`,

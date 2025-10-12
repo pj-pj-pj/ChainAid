@@ -42,7 +42,7 @@ export default function TopDonors() {
                 {donor.rank}
               </Badge>
               <Avatar className="h-8 w-8 border border-gray-800">
-                <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-xs text-white">
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-green-600 text-xs text-white">
                   {donor.address.slice(2, 4).toUpperCase()}
                 </AvatarFallback>
               </Avatar>

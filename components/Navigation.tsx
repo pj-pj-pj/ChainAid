@@ -23,7 +23,7 @@ export default function Navigation(): JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
   const navLinks: Array<{ href: string; label: string }> = [
-    { href: "/explore", label: "Explore" },
+    { href: "/explore", label: "All Campaigns" },
     { href: "/my-contributions", label: "My Contributions" },
     { href: "/create", label: "Create Campaign" },
     { href: "/my-campaigns", label: "My Campaigns" },
@@ -45,7 +45,7 @@ export default function Navigation(): JSX.Element {
               <Wallet className="w-5 h-5 text-black" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
-              ChainLedger
+              ChainAid
             </span>
           </Link>
 

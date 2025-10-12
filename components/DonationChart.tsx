@@ -61,11 +61,11 @@ export default function DonationChart() {
             >
               <stop
                 offset="0%"
-                stopColor="#6366F1"
+                stopColor="#32a852"
               />
               <stop
                 offset="100%"
-                stopColor="#9333EA"
+                stopColor="#1b8237"
               />
             </linearGradient>
           </defs>
