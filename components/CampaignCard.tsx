@@ -22,7 +22,12 @@ interface CampaignCardProps {
 export default function CampaignCard({
   campaign,
 }: CampaignCardProps): JSX.Element {
+  // ! IDK PANO TO
   // const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
+
+  // ! Move this to helpers
+  // ! Calculate days left
+  // ! Mali kasi logic neto
   const daysLeft = Math.max(
     0,
     Math.ceil(
@@ -46,10 +51,11 @@ export default function CampaignCard({
     }
   };
 
+  // TODO: Mali pa logic dito
   const progress =
-  campaign.goalAmount > 0
-    ? Math.min((campaign.totalDonations / campaign.goalAmount) * 100, 100)
-    : 0;
+    campaign.goalAmount > 0
+      ? Math.min((campaign.totalDonations / campaign.goalAmount) * 100, 100)
+      : 0;
 
   return (
     <Link href={`/campaign/${campaign.id}`}>
@@ -102,14 +108,10 @@ export default function CampaignCard({
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Raised</span>
               <span className="font-semibold text-green-400">
-                ${campaign.totalDonations.toLocaleString()} / $
-                {campaign.goalAmount.toLocaleString()}
+                ${campaign.totalDonations} / ${campaign.goalAmount}
               </span>
             </div>
-            <Progress
-              value={progress}
-              className="h-2 bg-gray-800"
-            >
+            <Progress value={progress} className="h-2 bg-gray-800">
               <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all" />
             </Progress>
           </div>

@@ -6,9 +6,7 @@ import { Campaign } from "@/types";
 const RPC_URL = "https://base-sepolia-rpc.publicnode.com";
 
 const IPFS_GATEWAYS = [
-  "https://gateway.pinata.cloud/ipfs/",
-  "https://ipfs.io/ipfs/",
-  "https://cloudflare-ipfs.com/ipfs/",
+  `https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/`,
 ];
 
 // --- In-memory IPFS cache ---
