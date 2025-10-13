@@ -39,7 +39,7 @@ const categories = [
   "Healthcare",
   "Education",
   "Environment",
-  "Water & Sanitation",
+  "Water and Sanitation",
   "Emergency Relief",
   "Community Development",
   "Other",
@@ -53,7 +53,6 @@ const formSchema = z.object({
   category: z.string().min(1, "Category is required"),
   goal: z.string().min(1, "Goal amount is required"),
   duration: z.string().min(1, "Duration is required"),
-  image: z.string().url().optional(),
 });
 
 export default function CreateCampaignPage() {
@@ -70,7 +69,6 @@ export default function CreateCampaignPage() {
       category: "",
       goal: "",
       duration: "",
-      image: "",
     },
   });
 
@@ -88,7 +86,8 @@ export default function CreateCampaignPage() {
       const durationDays = Number(values.duration) || 0;
       const now = new Date();
       const deadlineISO = new Date(
-        now.getTime() + (durationDays > 0 ? durationDays : 30) * 24 * 60 * 60 * 1000
+        now.getTime() +
+          (durationDays > 0 ? durationDays : 30) * 24 * 60 * 60 * 1000
       ).toISOString();
 
       const metadata = {
@@ -102,7 +101,9 @@ export default function CreateCampaignPage() {
         deadline: deadlineISO,
         status: "Pending",
         organizationName: values.organization,
-        imageUrl: values.image,
+        imageUrl: `/category/${values.category
+          .replace(" ", "-")
+          .toLocaleLowerCase()}.jpg`,
         verified: false,
         supporterCount: 0,
         supporterThreshold: 50,
@@ -121,14 +122,17 @@ export default function CreateCampaignPage() {
       });
 
       const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) throw new Error(uploadData.error || "Failed to upload metadata");
+      if (!uploadRes.ok)
+        throw new Error(uploadData.error || "Failed to upload metadata");
 
       const jsoncid = uploadData.cid;
       toast.success("Campaign metadata uploaded to IPFS!");
 
       // Create campaign on-chain
       toast.info("Sending transaction to Base Network...");
-      const deadlineTimestamp = Math.floor(new Date(deadlineISO).getTime() / 1000);
+      const deadlineTimestamp = Math.floor(
+        new Date(deadlineISO).getTime() / 1000
+      );
       const goalAmountInWei = parseEther(values.goal);
 
       const tx = await writeContractAsync({
@@ -147,6 +151,7 @@ export default function CreateCampaignPage() {
       });
 
       toast.success(`Campaign created successfully! Tx: ${tx}`);
+      console.log("✅ Campaign created. Transaction:", jsoncid, tx);
       form.reset();
     } catch (error: any) {
       console.error("❌ Error creating campaign:", error);
@@ -210,7 +215,9 @@ export default function CreateCampaignPage() {
                 name="organization"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white">Organization Name</FormLabel>
+                    <FormLabel className="text-white">
+                      Organization Name
+                    </FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -248,7 +255,10 @@ export default function CreateCampaignPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-white">Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="border-gray-800 bg-gray-950 text-white focus:border-green-500">
                           <SelectValue placeholder="Select category" />
@@ -277,7 +287,9 @@ export default function CreateCampaignPage() {
                   name="goal"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white">Funding Goal (ETH)</FormLabel>
+                      <FormLabel className="text-white">
+                        Funding Goal (ETH)
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -297,7 +309,9 @@ export default function CreateCampaignPage() {
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white">Duration (days)</FormLabel>
+                      <FormLabel className="text-white">
+                        Duration (days)
+                      </FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -311,40 +325,14 @@ export default function CreateCampaignPage() {
                   )}
                 />
               </div>
-
-              {/* <FormField
-                control={form.control}
-                name="image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-white">Campaign Image URL</FormLabel>
-                    <div className="flex gap-2">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          className="border-gray-800 bg-gray-950 text-white placeholder:text-gray-500 focus:border-green-500"
-                          placeholder="https://example.com/image.jpg"
-                        />
-                      </FormControl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="border-gray-800 bg-gray-950 text-white hover:bg-gray-800"
-                      >
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-
               <Button
                 type="submit"
                 disabled={!isConnected || isSubmitting}
                 className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
-                {isSubmitting ? "Creating Campaign..." : "Create Campaign (0.0001 ETH)"}
+                {isSubmitting
+                  ? "Creating Campaign..."
+                  : "Create Campaign (0.0001 ETH)"}
               </Button>
             </form>
           </Form>
