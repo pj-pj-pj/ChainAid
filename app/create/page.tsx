@@ -22,10 +22,10 @@ import { CONTRACT_ADDRESS } from "@/lib/contracts";
 import { parseEther } from "viem";
 
 import ChainAidABI from "@/abi/ChainAid.json";
-const contractAddress = CONTRACT_ADDRESS as `0x${string}`
+const contractAddress = CONTRACT_ADDRESS as `0x${string}`;
 
 export default function CreateCampaignPage() {
-const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync } = useWriteContract();
 
   const { address, isConnected } = useAccount();
   const [formData, setFormData] = useState({
@@ -46,54 +46,124 @@ const { writeContractAsync } = useWriteContract();
     "Water & Sanitation",
     "Emergency Relief",
     "Community Development",
+    "Other"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!isConnected) {
-    toast.error("Please connect your wallet first");
-    return;
-  }
+    e.preventDefault();
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
 
-  setIsSubmitting(true);
-  try {
-    const goalAmountInWei = parseEther(formData.goal); // ETH to Wei
-    const durationDays = Number(formData.duration);
-    const deadline = Math.floor(Date.now() / 1000) + durationDays * 24 * 60 * 60;
+    setIsSubmitting(true);
 
-    const tx = await writeContractAsync({
-      address: contractAddress,
-      abi: (ChainAidABI as any).abi,
-      functionName: "createCampaign",
-      args: [
-        formData.title,
-        formData.description,
-        goalAmountInWei,
-        BigInt(deadline),
-        formData.category,
-        formData.image || "", // IPFS hash or image URL
-      ],
-      // parseEther from viem returns bigint; cast to any to satisfy Wagmi/Viem typing here
-      value: (parseEther("0.0001") as any), // creation fee
-    });
+    try {
+      // ---------------------------------------
+      // 1️⃣ Prepare campaign metadata (IPFS)
+      // ---------------------------------------
+      const goalAmount = Number(formData.goal) || 0;
+      const durationDays = Number(formData.duration) || 0;
 
-    toast.success(`Campaign created successfully! Tx: ${tx}`);
-    setFormData({
-      title: "",
-      description: "",
-      organization: "",
-      category: "",
-      goal: "",
-      duration: "",
-      image: "",
-    });
-  } catch (err: any) {
-    console.error(err);
-    toast.error("Failed to create campaign");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      const now = new Date();
+      const deadlineISO =
+        durationDays > 0
+          ? new Date(
+              now.getTime() + durationDays * 24 * 60 * 60 * 1000
+            ).toISOString()
+          : new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+      const metadata = {
+        id: `campaign-${Date.now()}`,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        goalAmount,
+        currentAmount: 0,
+        createdAt: now.toISOString(),
+        deadline: deadlineISO,
+        status: "Pending",
+        organizationName: formData.organization,
+        imageUrl: formData.image || undefined,
+        verified: false,
+        supporterCount: 0,
+        supporterThreshold: 50,
+        creatorAddress: address || "",
+        creatorOrganization: formData.organization || undefined,
+        totalExpenses: 0,
+        donors: 0,
+      };
+
+      // ---------------------------------------
+      // 2️⃣ Upload metadata to IPFS (via Pinata)
+      // ---------------------------------------
+      toast.info("Uploading campaign metadata to IPFS...");
+
+      const uploadRes = await fetch("/api/pinata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(metadata),
+      });
+
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok)
+        throw new Error(uploadData.error || "Failed to upload metadata");
+
+      const jsoncid = uploadData.cid;
+
+      console.log("✅ Metadata uploaded to IPFS:", jsoncid);
+      toast.success("Campaign metadata uploaded to IPFS!");
+
+      // ---------------------------------------
+      // 3️⃣ Store essential data on-chain
+      // ---------------------------------------
+      const goalAmountInWei = parseEther(formData.goal);
+
+      toast.info("Sending transaction to Base Network...");
+
+      // ni recommed lang ni gpt this
+      const deadlineTimestamp = Math.floor(
+        new Date(deadlineISO).getTime() / 1000
+      ); // convert deadline to UNIX timestamp (seconds)
+
+      const tx = await writeContractAsync({
+        address: contractAddress,
+        abi: (ChainAidABI as any).abi,
+        functionName: "createCampaign",
+        args: [
+          formData.title,              // 1. title
+          formData.description,        // 2. description
+          goalAmountInWei,             // 3. goal amount in wei
+          BigInt(deadlineTimestamp),   // 4. deadline as uint256
+          formData.category,           // 5. category
+          jsoncid                      // 6. ipfsHash (CID string)
+        ],
+        value: parseEther("0.0001"),   // ✅ creation fee
+      });
+
+
+      console.log("✅ Transaction sent:", tx);
+      toast.success(`Campaign created successfully! Tx: ${tx}`);
+
+      // ---------------------------------------
+      // 4️⃣ Reset form
+      // ---------------------------------------
+      setFormData({
+        title: "",
+        description: "",
+        organization: "",
+        category: "",
+        goal: "",
+        duration: "",
+        image: "",
+      });
+    } catch (error: any) {
+      console.error("❌ handleSubmit error:", error);
+      toast.error(error.message || "Failed to create campaign");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
