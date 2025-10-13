@@ -46,6 +46,7 @@ export default function CreateCampaignPage() {
     "Water & Sanitation",
     "Emergency Relief",
     "Community Development",
+    "Other"
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -120,16 +121,26 @@ export default function CreateCampaignPage() {
 
       toast.info("Sending transaction to Base Network...");
 
+      // ni recommed lang ni gpt this
+      const deadlineTimestamp = Math.floor(
+        new Date(deadlineISO).getTime() / 1000
+      ); // convert deadline to UNIX timestamp (seconds)
+
       const tx = await writeContractAsync({
         address: contractAddress,
         abi: (ChainAidABI as any).abi,
         functionName: "createCampaign",
         args: [
-          goalAmountInWei, // target goal in Wei
-          jsoncid, // pointer to IPFS metadata JSON
+          formData.title,              // 1. title
+          formData.description,        // 2. description
+          goalAmountInWei,             // 3. goal amount in wei
+          BigInt(deadlineTimestamp),   // 4. deadline as uint256
+          formData.category,           // 5. category
+          jsoncid                      // 6. ipfsHash (CID string)
         ],
-        value: parseEther("0.0001") as any, // small creation fee
+        value: parseEther("0.0001"),   // ✅ creation fee
       });
+
 
       console.log("✅ Transaction sent:", tx);
       toast.success(`Campaign created successfully! Tx: ${tx}`);
