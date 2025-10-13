@@ -33,17 +33,10 @@ import {
 import { CONTRACT_ADDRESS } from "@/lib/contracts";
 import ChainAidABI from "@/abi/ChainAid.json";
 
-const contractAddress = CONTRACT_ADDRESS as `0x${string}`;
+import { CATEGORIES, CATEGORY_TYPE } from "@/utils/CONSTANTS";
+import { SelectItemIndicator } from "@radix-ui/react-select";
 
-const categories = [
-  "Healthcare",
-  "Education",
-  "Environment",
-  "Water and Sanitation",
-  "Emergency Relief",
-  "Community Development",
-  "Other",
-];
+const contractAddress = CONTRACT_ADDRESS as `0x${string}`;
 
 // Form validation schema
 const formSchema = z.object({
@@ -102,7 +95,7 @@ export default function CreateCampaignPage() {
         status: "Pending",
         organizationName: values.organization,
         imageUrl: `/category/${values.category
-          .replace(" ", "-")
+          .replace(/ /g, "-")
           .toLocaleLowerCase()}.jpg`,
         verified: false,
         supporterCount: 0,
@@ -142,6 +135,7 @@ export default function CreateCampaignPage() {
         args: [
           values.title,
           values.description,
+          values.organization,
           goalAmountInWei,
           BigInt(deadlineTimestamp),
           values.category,
@@ -265,15 +259,17 @@ export default function CreateCampaignPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="border-gray-800 bg-gray-950 text-white">
-                        {categories.map((category) => (
-                          <SelectItem
-                            key={category}
-                            value={category}
-                            className="text-white hover:bg-gray-800"
-                          >
-                            {category}
-                          </SelectItem>
-                        ))}
+                        {
+                          CATEGORIES.map((cat) => (
+                            <SelectItem
+                              key={cat.value}
+                              value={cat.value as CATEGORY_TYPE}
+                              className="text-white hover:bg-gray-800"
+                            >
+                              {cat.name}
+                            </SelectItem>
+                          )) /* Use the imported CATEGORIES array */
+                        }
                       </SelectContent>
                     </Select>
                     <FormMessage />

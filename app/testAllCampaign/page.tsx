@@ -66,6 +66,8 @@ const page = () => {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  console.log("data", campaigns);
+
   return (
     <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">

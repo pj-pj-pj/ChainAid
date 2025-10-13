@@ -45,13 +45,11 @@ export default function CampaignCard({
     }
   };
 
-  console.log(campaign);
-
   return (
     <Link href={`/campaign/${campaign.id}`}>
       <Card className="group hover:border-green-500/50 transition-all duration-300 bg-gray-950/50 border-green-900/30 hover:shadow-lg hover:shadow-green-500/10 overflow-hidden">
         <div className="h-48 bg-gradient-to-br from-gray-900 via-green-950/30 to-gray-900 overflow-hidden">
-          {campaign.imageUrl ? (
+          {/* {campaign.imageUrl ? (
             <img
               src={campaign.imageUrl}
               alt={campaign.title}
@@ -61,7 +59,10 @@ export default function CampaignCard({
             <div className="w-full h-full flex items-center justify-center">
               <TrendingUp className="w-16 h-16 text-green-500/30" />
             </div>
-          )}
+          )} */}
+          {
+            
+          }
         </div>
 
         <CardHeader>
