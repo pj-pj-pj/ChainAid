@@ -38,6 +38,11 @@ contract ChainAid {
     ) public payable {
         require(msg.value == CREATION_FEE, "Incorrect creation fee");
 
+        // ✅ Optional IPFS handling — if empty, set default
+        string memory finalIpfsHash = bytes(_ipfsHash).length > 0
+            ? _ipfsHash
+            : "none";
+
         Campaign storage newCampaign = campaigns[nextCampaignId];
         newCampaign.id = nextCampaignId;
         newCampaign.creator = msg.sender;
@@ -47,7 +52,7 @@ contract ChainAid {
         newCampaign.createdAt = block.timestamp;
         newCampaign.deadline = _deadline;
         newCampaign.category = _category;
-        newCampaign.ipfsHash = _ipfsHash;
+        newCampaign.ipfsHash = finalIpfsHash;
         newCampaign.state = CampaignState.Pending;
 
         nextCampaignId++;
