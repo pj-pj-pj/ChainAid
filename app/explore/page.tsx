@@ -24,9 +24,12 @@ export default function ExplorePage() {
     setCampaigns(mockCampaigns);
   }, [setCampaigns]);
 
+  // Build unique categories as a plain array (avoid creating Set instances)
   const categories = [
     "all",
-    ...Array.from(new Set(mockCampaigns.map((c) => c.category))),
+    ...mockCampaigns
+      .map((c) => c.category)
+      .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
   ];
 
   const filteredCampaigns = campaigns.filter((campaign) => {

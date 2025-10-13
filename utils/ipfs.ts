@@ -1,144 +1,50 @@
-import { NFTStorage, File as NFTFile } from "nft.storage";
+// app/api/files/route.ts
+import { NextResponse } from "next/server";
+import PinataSDK from "@pinata/sdk";
 
-// For demo purposes, using a placeholder API key
-// In production, this should be stored securely and accessed via API route
-const NFT_STORAGE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDQxNjhiODgyRjY3YjMzNzU1ODI4MzRmNDJjOTVmOGNmQzMyY0U4YzQiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNTU2MjQwMDAwMCwibmFtZSI6ImRlbW8ta2V5In0.demo";
+const jwt = process.env.PINATA_JWT || "";
+const apiKey = process.env.PINATA_API_KEY || "";
+const apiSecret = process.env.PINATA_API_SECRET || "";
 
-const client = new NFTStorage({ token: NFT_STORAGE_KEY });
+// Prefer JWT if available
+const pinata = jwt
+  ? new PinataSDK({ jwt } as any)
+  : new PinataSDK(apiKey, apiSecret);
 
-export interface UploadProgress {
-  loaded: number;
-  total: number;
-  percentage: number;
-}
-
-export interface UploadResult {
-  cid: string;
-  url: string;
-  size: number;
-}
-
-/**
- * Upload a file to IPFS via NFT.Storage
- */
-export async function uploadToIPFS(
-  file: File,
-  onProgress?: (progress: UploadProgress) => void
-): Promise<UploadResult> {
+export async function POST(req: Request) {
   try {
-    // Convert browser File to NFT.Storage File
-    const buffer = await file.arrayBuffer();
-    const nftFile = new NFTFile([buffer], file.name, { type: file.type });
+    const form = await req.formData();
+    const file = form.get("file") as File | null;
+    if (!file)
+      return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-    // Track upload progress if callback provided
-    let uploadedBytes = 0;
-    const totalBytes = file.size;
+    // Convert browser File -> Buffer -> Readable stream for pinata-sdk
+    const ab = await file.arrayBuffer();
+    const buffer = Buffer.from(ab);
+    const { Readable } = await import("stream");
 
-    if (onProgress) {
-      const progressInterval = setInterval(() => {
-        uploadedBytes = Math.min(uploadedBytes + totalBytes / 10, totalBytes);
-        onProgress({
-          loaded: uploadedBytes,
-          total: totalBytes,
-          percentage: (uploadedBytes / totalBytes) * 100,
-        });
-      }, 200);
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
 
-      const cid = await client.storeBlob(nftFile);
-      clearInterval(progressInterval);
+    const result = await pinata.pinFileToIPFS(stream, {
+      pinataMetadata: { name: file.name || "upload" },
+      pinataOptions: { cidVersion: 1 },
+    });
 
-      // Final progress update
-      onProgress({
-        loaded: totalBytes,
-        total: totalBytes,
-        percentage: 100,
-      });
+    // result.IpfsHash is the CID
+    const cid = result.IpfsHash;
+    // Use your Pinata gateway subdomain if set, otherwise the default gateway
+    const gatewayHost =
+      process.env.NEXT_PUBLIC_GATEWAY_URL || "gateway.pinata.cloud";
+    const url = `https://${gatewayHost}/ipfs/${cid}`;
 
-      return {
-        cid,
-        url: `https://nftstorage.link/ipfs/${cid}`,
-        size: file.size,
-      };
-    }
-
-    const cid = await client.storeBlob(nftFile);
-
-    return {
-      cid,
-      url: `https://nftstorage.link/ipfs/${cid}`,
-      size: file.size,
-    };
-  } catch (error) {
-    console.error("IPFS upload error:", error);
-    throw new Error("Failed to upload file to IPFS");
-  }
-}
-
-/**
- * Upload multiple files to IPFS
- */
-export async function uploadMultipleToIPFS(
-  files: File[],
-  onProgress?: (fileIndex: number, progress: UploadProgress) => void
-): Promise<UploadResult[]> {
-  const results: UploadResult[] = [];
-
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    const result = await uploadToIPFS(
-      file,
-      onProgress
-        ? (progress: UploadProgress) => onProgress(i, progress)
-        : undefined
+    return NextResponse.json({ cid, url });
+  } catch (err: any) {
+    console.error("Pinata upload error:", err);
+    return NextResponse.json(
+      { error: err?.message || String(err) },
+      { status: 500 }
     );
-    results.push(result);
   }
-
-  return results;
-}
-
-/**
- * Get IPFS URL from CID
- */
-export function getIPFSUrl(cid: string): string {
-  return `https://nftstorage.link/ipfs/${cid}`;
-}
-
-/**
- * Validate file before upload
- */
-export function validateFile(
-  file: File,
-  maxSizeMB: number = 10
-): { valid: boolean; error?: string } {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-
-  if (file.size > maxSizeBytes) {
-    return {
-      valid: false,
-      error: `File size exceeds ${maxSizeMB}MB limit`,
-    };
-  }
-
-  // Allowed file types for receipts and documents
-  const allowedTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/gif",
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  ];
-
-  if (!allowedTypes.includes(file.type)) {
-    return {
-      valid: false,
-      error:
-        "File type not supported. Please upload images, PDFs, or documents.",
-    };
-  }
-
-  return { valid: true };
 }

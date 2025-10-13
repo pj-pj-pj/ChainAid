@@ -22,7 +22,10 @@ export default function MyContributionsPage() {
     (d) => d.donorAddress.toLowerCase() === address?.toLowerCase()
   );
   const totalDonated = myDonations.reduce((sum, d) => sum + d.amount, 0);
-  const campaignsSupported = new Set(myDonations.map((d) => d.campaignId)).size;
+  // Calculate number of unique campaigns supported without creating a Set instance
+  const campaignsSupported = myDonations
+    .map((d) => d.campaignId)
+    .filter((id, idx, arr) => arr.indexOf(id) === idx).length;
 
   return (
     <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">

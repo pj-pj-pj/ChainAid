@@ -21,7 +21,7 @@ export interface Campaign {
   supportGoal: number;
   creatorAddress: string;
   creatorOrganization?: string;
-  documents?: string[]; // IPFS hashes
+  // documents?: string[]; // IPFS hashes
   totalExpenses: number;
   remainingBalance: number;
   donors: number;

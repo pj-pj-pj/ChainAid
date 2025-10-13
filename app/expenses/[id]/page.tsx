@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { mockCampaigns } from "@/utils/mockData";
-import { uploadToIPFS } from "@/utils/ipfs";
+// import { uploadToIPFS } from "@/utils/ipfs";
 import {
   ArrowLeft,
   FileText,
@@ -84,8 +84,8 @@ export default function ExpensePage(): JSX.Element {
       let receiptUrl = "";
       if (file) {
         setUploadProgress(20);
-        const uploadResult = await uploadToIPFS(file);
-        receiptUrl = uploadResult.url;
+        // const uploadResult = await uploadToIPFS(file);
+        // receiptUrl = uploadResult.url;
         setUploadProgress(60);
       }
 
