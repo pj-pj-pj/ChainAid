@@ -65,3 +65,67 @@ export async function fetchCampaigns(count: number): Promise<Campaign[]> {
 
   return fetched;
 }
+
+export async function fetchCampaign(id: number): Promise<Campaign | null> {
+  if (id < 0) return null;
+
+  const { createPublicClient, http } = await import("viem");
+  const { baseSepolia } = await import("viem/chains");
+
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: http("https://base-sepolia-rpc.publicnode.com"),
+  });
+
+  try {
+    const data = (await client.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: "campaigns",
+      args: [BigInt(id)],
+    })) as readonly [
+      bigint,
+      `0x${string}`,
+      string,
+      string,
+      bigint,
+      bigint,
+      bigint,
+      bigint,
+      string,
+      string,
+      number
+    ];
+
+    const [
+      cid,
+      creator,
+      title,
+      description,
+      goalAmount,
+      totalDonations,
+      createdAt,
+      deadline,
+      category,
+      ipfsHash,
+      state,
+    ] = data;
+
+    return {
+      id: Number(cid),
+      creator,
+      title,
+      description,
+      goalAmount: Number(goalAmount) / 1e18,
+      totalDonations: Number(totalDonations) / 1e18,
+      createdAt: createdAt > 0n ? new Date(Number(createdAt) * 1000) : null,
+      deadline: deadline > 0n ? new Date(Number(deadline) * 1000) : null,
+      category,
+      ipfsHash,
+      state: Number(state),
+    };
+  } catch (err) {
+    console.error("fetchCampaign error:", err);
+    return null;
+  }
+}

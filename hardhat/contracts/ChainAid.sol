@@ -63,4 +63,21 @@ contract ChainAid {
         require(msg.sender == owner, "Not authorized");
         payable(owner).transfer(address(this).balance);
     }
+
+    // Event emitted when a donation is received
+    event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amount);
+
+    // Allow anyone to donate to an existing campaign. The sent value is recorded as totalDonations.
+    function donate(uint256 campaignId) external payable {
+        require(msg.value > 0, "Donation must be > 0");
+        require(campaignId < nextCampaignId, "Invalid campaign");
+
+        Campaign storage c = campaigns[campaignId];
+        require(c.state != CampaignState.Cancelled, "Campaign cancelled");
+        require(c.state != CampaignState.Completed, "Campaign completed");
+
+        c.totalDonations += msg.value;
+
+        emit DonationReceived(campaignId, msg.sender, msg.value);
+    }
 }
