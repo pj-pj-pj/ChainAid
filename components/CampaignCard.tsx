@@ -21,11 +21,11 @@ interface CampaignCardProps {
 export default function CampaignCard({
   campaign,
 }: CampaignCardProps): JSX.Element {
-  const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
+  // const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
   const daysLeft = Math.max(
     0,
     Math.ceil(
-      (new Date(campaign.deadline).getTime() - Date.now()) /
+      (new Date(campaign.deadline || Date.now()).getTime() - Date.now()) /
         (1000 * 60 * 60 * 24)
     )
   );
@@ -44,6 +44,8 @@ export default function CampaignCard({
         return "bg-gray-900/30 text-gray-400 border-gray-500/50";
     }
   };
+
+  console.log(campaign);
 
   return (
     <Link href={`/campaign/${campaign.id}`}>
@@ -67,14 +69,14 @@ export default function CampaignCard({
             <CardTitle className="text-lg font-bold text-green-50 group-hover:text-green-400 transition-colors line-clamp-2">
               {campaign.title}
             </CardTitle>
-            {campaign.verified && (
+            {/* {campaign.verified && (
               <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-            )}
+            )} */}
           </div>
           <div className="flex flex-wrap gap-2">
-            <Badge className={getStatusColor(campaign.status)}>
+            {/* <Badge className={getStatusColor(campaign.status)}>
               {campaign.status}
-            </Badge>
+            </Badge> */}
             <Badge
               variant="outline"
               className="bg-green-950/20 text-green-400 border-green-500/30"
@@ -93,16 +95,16 @@ export default function CampaignCard({
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Raised</span>
               <span className="font-semibold text-green-400">
-                ${campaign.currentAmount.toLocaleString()} / $
-                {campaign.goalAmount.toLocaleString()}
+                {/* ${campaign.currentAmount.toLocaleString()} / $
+                {campaign.goalAmount.toLocaleString()} */}
               </span>
             </div>
-            <Progress
+            {/* <Progress
               value={progress}
               className="h-2 bg-gray-800"
             >
               <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all" />
-            </Progress>
+            </Progress> */}
           </div>
 
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-green-900/30">
@@ -110,14 +112,14 @@ export default function CampaignCard({
               <Users className="w-4 h-4 text-green-500 mb-1" />
               <span className="text-xs text-gray-500">Donors</span>
               <span className="text-sm font-semibold text-green-400">
-                {campaign.supporterCount}
+                {/* {campaign.supporterCount} */}
               </span>
             </div>
             <div className="flex flex-col items-center">
               <Target className="w-4 h-4 text-green-500 mb-1" />
               <span className="text-xs text-gray-500">Progress</span>
               <span className="text-sm font-semibold text-green-400">
-                {Math.round(progress)}%
+                {/* {Math.round(progress)}% */}
               </span>
             </div>
             <div className="flex flex-col items-center">
