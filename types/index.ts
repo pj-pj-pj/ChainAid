@@ -1,31 +1,24 @@
-export type CampaignStatus = "Pending" | "Active" | "Completed" | "Cancelled";
+export type CampaignState = "Pending" | "Active" | "Completed" | "Cancelled";
 
 export type UserRole = "Admin" | "Member" | "Donor" | "Viewer";
 
 export interface Campaign {
-  id: string;
+  id: number;
+  creator: string;
   title: string;
   description: string;
-  category: string;
   goalAmount: number;
-  currentAmount: number;
-  createdAt: string;
-  deadline: string;
-  status: CampaignStatus;
-  organizationName: string;
+  totalDonations: number;
+  createdAt: Date | null;
+  deadline: Date | null;
+  category: string;
+  ipfsHash?: string;
+  state: CampaignState;
+
+  status?: string;
   imageUrl?: string;
-  verified: boolean;
-  supporterCount: number;
-  supporterThreshold: number;
-  pledgedSupport: number;
-  supportGoal: number;
-  creatorAddress: string;
-  creatorOrganization?: string;
-  // documents?: string[]; // IPFS hashes
-  totalExpenses: number;
-  remainingBalance: number;
-  donors: number;
 }
+
 
 export interface Supporter {
   id: string;

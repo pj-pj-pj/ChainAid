@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, JSX } from "react";
+import { useEffect, useState, JSX } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -12,7 +17,6 @@ import RoleBadge from "@/components/RoleBadge";
 import DonationCard from "@/components/DonationCard";
 import ExpenseCard from "@/components/ExpenseCard";
 import SupportProgressBar from "@/components/SupportProgressBar";
-import { mockCampaigns, mockDonations, mockExpenses } from "@/utils/mockData";
 import {
   ArrowLeft,
   ExternalLink,
@@ -24,16 +28,60 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+import { useReadContract } from "wagmi";
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
+import { fetchCampaigns } from "@/lib/helper/fetchCampaigns";
+import { Campaign } from "@/types";
+
 export default function CampaignDetailPage(): JSX.Element {
   const params = useParams();
-  const campaignId = params.id as string;
+  const campaignId = Number(params.id);
   const [userRole] = useState<"Admin" | "Member" | "Donor" | "Viewer">("Donor");
 
-  const campaign = mockCampaigns.find((c) => c.id === campaignId);
-  const donations = mockDonations.filter((d) => d.campaignId === campaignId);
-  const expenses = mockExpenses.filter((e) => e.campaignId === campaignId);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [donations, setDonations] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!campaign) {
+  const { data: totalCampaigns } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "nextCampaignId",
+    chainId: 84532,
+  });
+
+  useEffect(() => {
+    async function load() {
+      if (!totalCampaigns || isNaN(campaignId)) return;
+      setIsLoading(true);
+      try {
+        const fetched = await fetchCampaigns(Number(totalCampaigns));
+        const found = fetched.find((c) => c.id === campaignId);
+        setCampaign(found || null);
+
+        // Optional: fetch donation and expense data from IPFS or event logs
+        // const donationData = await fetchDonations(campaignId);
+        // const expenseData = await fetchExpenses(campaignId);
+        // setDonations(donationData);
+        // setExpenses(expenseData);
+
+      } catch (err) {
+        console.error("Failed to load campaign", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    load();
+  }, [totalCampaigns, campaignId]);
+
+  if (isLoading)
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        Loading campaign data...
+      </div>
+    );
+
+  if (!campaign)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -48,16 +96,15 @@ export default function CampaignDetailPage(): JSX.Element {
         </div>
       </div>
     );
-  }
 
-  const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
-  const totalExpenses = campaign.totalExpenses;
-  const remainingBalance = campaign.remainingBalance;
+  const progress = (campaign.totalDonations / campaign.goalAmount) * 100;
+  const totalExpenses = campaign.totalExpenses || 0;
+  const remainingBalance =
+    campaign.totalDonations - (campaign.totalExpenses || 0);
   const daysLeft = Math.max(
     0,
     Math.ceil(
-      (new Date(campaign.deadline).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24)
+      (campaign.deadline * 1000 - Date.now()) / (1000 * 60 * 60 * 24)
     )
   );
 
@@ -104,8 +151,8 @@ export default function CampaignDetailPage(): JSX.Element {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge className={getStatusColor(campaign.status)}>
-                    {campaign.status}
+                  <Badge className={getStatusColor(campaign.state)}>
+                    {campaign.state}
                   </Badge>
                   <Badge
                     variant="outline"
@@ -120,13 +167,13 @@ export default function CampaignDetailPage(): JSX.Element {
 
             <p className="text-gray-300 mb-6">{campaign.description}</p>
 
-            {/* Stats Grid */}
+            {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <Card className="bg-gray-950/50 border-green-900/30">
                 <CardContent className="p-4 text-center">
                   <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    ${campaign.currentAmount.toLocaleString()}
+                    ${campaign.totalDonations.toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">Raised</p>
                 </CardContent>
@@ -146,9 +193,9 @@ export default function CampaignDetailPage(): JSX.Element {
                 <CardContent className="p-4 text-center">
                   <Users className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    {campaign.supporterCount}
+                    {campaign.supportersCount || 0}
                   </p>
-                  <p className="text-xs text-gray-500">Donors</p>
+                  <p className="text-xs text-gray-500">Supporters</p>
                 </CardContent>
               </Card>
 
@@ -174,18 +221,13 @@ export default function CampaignDetailPage(): JSX.Element {
                     {Math.round(progress)}%
                   </span>
                 </div>
-                <Progress
-                  value={progress}
-                  className="h-3 bg-gray-800"
-                >
-                  <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full" />
-                </Progress>
+                <Progress value={progress} className="h-3 bg-gray-800" />
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>${campaign.currentAmount.toLocaleString()} raised</span>
+                  <span>${campaign.totalDonations.toLocaleString()} raised</span>
                   <span>
                     $
                     {(
-                      campaign.goalAmount - campaign.currentAmount
+                      campaign.goalAmount - campaign.totalDonations
                     ).toLocaleString()}{" "}
                     remaining
                   </span>
@@ -196,18 +238,18 @@ export default function CampaignDetailPage(): JSX.Element {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {campaign.status === "Pending" && (
+            {campaign.state === "Pending" && (
               <SupportProgressBar
-                currentSupporters={campaign.supporterCount || 25}
+                currentSupporters={campaign.supportersCount || 0}
                 requiredSupporters={50}
-                currentPledged={campaign.pledgedSupport || 1250}
-                requiredPledged={2500}
-                status={campaign.status}
+                currentPledged={campaign.totalDonations}
+                requiredPledged={campaign.goalAmount / 2}
+                status={campaign.state}
                 deadline={campaign.deadline}
               />
             )}
 
-            {campaign.status === "Active" && (
+            {campaign.state === "Active" && (
               <Card className="bg-gradient-to-br from-green-950/50 to-gray-950/50 border-green-500/50">
                 <CardContent className="p-6 space-y-4">
                   <div className="text-center">
@@ -246,7 +288,7 @@ export default function CampaignDetailPage(): JSX.Element {
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total Raised</span>
                   <span className="font-semibold text-green-400">
-                    ${campaign.currentAmount.toLocaleString()}
+                    ${campaign.totalDonations.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -277,15 +319,15 @@ export default function CampaignDetailPage(): JSX.Element {
               </CardHeader>
               <CardContent>
                 <Link
-                  href={`https://basescan.org/address/${campaign.creatorAddress}`}
+                  href={`https://basescan.org/address/${campaign.creator}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-green-400 hover:text-green-300 transition-colors group"
                 >
                   <TrendingUp className="w-4 h-4" />
                   <span className="font-mono text-xs">
-                    {campaign.creatorAddress.slice(0, 20)}...
-                    {campaign.creatorAddress.slice(-8)}
+                    {campaign.creator.slice(0, 20)}...
+                    {campaign.creator.slice(-8)}
                   </span>
                   <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
@@ -295,10 +337,7 @@ export default function CampaignDetailPage(): JSX.Element {
         </div>
 
         {/* Tabs */}
-        <Tabs
-          defaultValue="donations"
-          className="space-y-6"
-        >
+        <Tabs defaultValue="donations" className="space-y-6">
           <TabsList className="bg-gray-950/50 border border-green-900/30">
             <TabsTrigger
               value="donations"
@@ -316,20 +355,15 @@ export default function CampaignDetailPage(): JSX.Element {
               value="supporters"
               className="data-[state=active]:bg-green-900/30 data-[state=active]:text-green-400"
             >
-              Supporters ({campaign.supporterCount || 0})
+              Supporters ({campaign.supportersCount || 0})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent
-            value="donations"
-            className="space-y-4"
-          >
+          {/* Donations */}
+          <TabsContent value="donations" className="space-y-4">
             {donations.length > 0 ? (
               donations.map((donation) => (
-                <DonationCard
-                  key={donation.id}
-                  donation={donation}
-                />
+                <DonationCard key={donation.id} donation={donation} />
               ))
             ) : (
               <Card className="bg-gray-950/50 border-green-900/30">
@@ -341,10 +375,8 @@ export default function CampaignDetailPage(): JSX.Element {
             )}
           </TabsContent>
 
-          <TabsContent
-            value="expenses"
-            className="space-y-4"
-          >
+          {/* Expenses */}
+          <TabsContent value="expenses" className="space-y-4">
             {(userRole === "Admin" || userRole === "Member") && (
               <Link href={`/expenses/${campaign.id}`}>
                 <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold">
@@ -355,11 +387,7 @@ export default function CampaignDetailPage(): JSX.Element {
 
             {expenses.length > 0 ? (
               expenses.map((expense) => (
-                <ExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  userRole={userRole}
-                />
+                <ExpenseCard key={expense.id} expense={expense} userRole={userRole} />
               ))
             ) : (
               <Card className="bg-gray-950/50 border-green-900/30">
@@ -371,6 +399,7 @@ export default function CampaignDetailPage(): JSX.Element {
             )}
           </TabsContent>
 
+          {/* Supporters */}
           <TabsContent value="supporters">
             <Card className="bg-gray-950/50 border-green-900/30">
               <CardContent className="p-12 text-center">
