@@ -34,9 +34,9 @@ export default function RootLayout({
 }
 
 export const metadata: Metadata = {
-  title: "ChainLedger: Donation Tracker",
+  title: "ChainAid",
   description:
-    "Enhance donation transparency with ChainLedger's frontend app. Explore public campaigns, manage private initiatives, track on-chain transactions, and verify NGO credentials seamlessly.",
+    "Enhance donation transparency with ChainAid's app. Explore public campaigns, manage private initiatives, track on-chain transactions, and verify NGO credentials seamlessly.",
   other: {
     "fc:frame": JSON.stringify({
       version: "next",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
         title: "Open with Ohara",
         action: {
           type: "launch_frame",
-          name: "ChainLedger: Donation Tracker",
+          name: "ChainAid",
           url: "https://melted-kitchen-467.app.ohara.ai",
           splashImageUrl:
             "https://usdozf7pplhxfvrl.public.blob.vercel-storage.com/farcaster/splash_images/splash_image1.svg",
