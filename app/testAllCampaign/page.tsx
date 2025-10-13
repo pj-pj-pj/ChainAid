@@ -1,11 +1,7 @@
 "use client";
 
-import { useReadContract } from "wagmi";
-import { Campaign } from "@/types";
-import { fetchCampaigns } from "@/lib/helper/fetchCampaigns";
-import { CONTRACT_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
-
-import { useState, useEffect, JSX } from "react";
+import { useEffect, useState } from "react";
+import { useCampaignStore } from "@/store/useCampaignStore";
 import CampaignCard from "@/components/CampaignCard";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,56 +13,39 @@ import {
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
 
-const page = () => {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
+export default function ExplorePage() {
+  const { campaigns, isLoading, fetchAll } = useCampaignStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
 
-  const { data: totalCampaigns } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: "nextCampaignId",
-    chainId: 84532,
-  });
-
+  // Fetch only once (cached in Zustand)
   useEffect(() => {
-    async function load() {
-      if (!totalCampaigns) return;
-      setIsLoading(true);
-      try {
-        const fetched = await fetchCampaigns(Number(totalCampaigns));
-        setCampaigns(fetched);
-      } catch (err) {
-        console.error("Failed to fetch campaigns", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    load();
-  }, [totalCampaigns]);
+    fetchAll(12);
+  }, []);
+
+  console.log("All campaigns:", campaigns);
 
   const categories = [
     "all",
     ...campaigns
       .map((c) => c.category)
-      .filter((cat, idx, arr) => arr.indexOf(cat) === idx),
+      .filter((cat, idx, arr) => cat && arr.indexOf(cat) === idx),
   ];
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch =
-      campaign.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      campaign.description.toLowerCase().includes(searchTerm.toLowerCase());
+      campaign.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      campaign.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       selectedCategory === "all" || campaign.category === selectedCategory;
     const matchesStatus =
-      selectedStatus === "all" || campaign.status === selectedStatus;
+      selectedStatus === "all" ||
+      (typeof campaign.state === "string"
+        ? campaign.state.toLowerCase() === selectedStatus
+        : false);
     return matchesSearch && matchesCategory && matchesStatus;
   });
-
-  console.log("data", campaigns);
 
   return (
     <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">
@@ -80,7 +59,7 @@ const page = () => {
         </div>
 
         {/* Search and Filters */}
-        <div className="mb-8 flex gap-4 ">
+        <div className="mb-8 flex gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
@@ -88,12 +67,12 @@ const page = () => {
               placeholder="Search campaigns..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="border-gray-800 bg-gray-950 pl-10 text-white placeholder:text-gray-500 focus:border-indigo-500"
+              className="border-gray-800 bg-gray-950 pl-10 text-white placeholder:text-gray-500 focus:border-green-500"
             />
           </div>
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-indigo-500">
+            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-green-500">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent className="border-gray-800 bg-gray-950 text-white">
@@ -110,44 +89,21 @@ const page = () => {
           </Select>
 
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-indigo-500">
+            <SelectTrigger className="flex-1 border-gray-800 bg-gray-950 text-white focus:border-green-500">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="border-gray-800 bg-gray-950 text-white">
-              <SelectItem
-                value="pending"
-                className="text-white hover:bg-gray-800"
-              >
-                Pending
-              </SelectItem>
-              <SelectItem value="all" className="text-white hover:bg-gray-800">
-                All Status
-              </SelectItem>
-              <SelectItem
-                value="active"
-                className="text-white hover:bg-gray-800"
-              >
-                Active
-              </SelectItem>
-              <SelectItem
-                value="completed"
-                className="text-white hover:bg-gray-800"
-              >
-                Completed
-              </SelectItem>
-              <SelectItem
-                value="cancelled"
-                className="text-white hover:bg-gray-800"
-              >
-                Cancelled
-              </SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {/* Loading / Results */}
+        {/* Loading State */}
         {isLoading ? (
-          //TODO: MAKE THIS A PROPER LOADING SPINNER COMPONENT
           <div className="flex flex-col items-center justify-center py-20">
             <svg
               className="animate-spin h-8 w-8 text-green-400"
@@ -202,6 +158,4 @@ const page = () => {
       </div>
     </div>
   );
-};
-
-export default page;
+}
