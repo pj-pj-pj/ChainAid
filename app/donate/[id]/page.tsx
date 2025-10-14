@@ -19,7 +19,7 @@ import ChainAidABI from "@/abi/ChainAid.json";
 import { parseEther } from "viem";
 import { toast } from "sonner";
 import { useAppStore } from "@/store/useAppStore";
-import { fetchCampaigns } from "@/lib/helper/fetchCampaigns";
+import { useCampaignStore } from "@/store/useCampaignStore";
 import {
   ArrowLeft,
   DollarSign,
@@ -38,33 +38,45 @@ export default function DonatePage(): JSX.Element {
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(true);
 
-  useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setIsLoadingCampaign(true);
-      try {
-        const fetched = await fetchCampaigns(campaignId);
-        if (!mounted) return;
-        setCampaign(fetched);
-      } catch (err) {
-        console.error("Failed to fetch campaign", err);
-        if (mounted) setCampaign(null);
-      } finally {
-        if (mounted) setIsLoadingCampaign(false);
-      }
-    }
+  const { campaigns, fetchAll } = useCampaignStore();
 
-    if (!Number.isNaN(campaignId)) {
-      load();
-    } else {
+  useEffect(() => {
+    // if invalid id
+    if (Number.isNaN(campaignId)) {
       setIsLoadingCampaign(false);
       setCampaign(null);
+      return;
     }
 
-    return () => {
-      mounted = false;
-    };
-  }, [campaignId]);
+    // try to find the campaign in the store (synchronous)
+    const found = campaigns.find(
+      (c) =>
+        Number(c?.id) === Number(campaignId) ||
+        String(c?.id) === String(campaignId)
+    );
+
+    if (found) {
+      setCampaign(found);
+      setIsLoadingCampaign(false);
+      return;
+    }
+
+    // if store is empty, ask the store to fetch (same pattern used in explore page)
+    if (!campaigns || campaigns.length === 0) {
+      setIsLoadingCampaign(true);
+      try {
+        fetchAll?.(12);
+      } catch (err) {
+        console.error("Failed to fetch campaigns from store", err);
+        setIsLoadingCampaign(false);
+      }
+      return;
+    }
+
+    // store populated but campaign not found
+    setCampaign(null);
+    setIsLoadingCampaign(false);
+  }, [campaignId, campaigns, fetchAll]);
 
   const [amount, setAmount] = useState<string>("");
   const [message, setMessage] = useState<string>("");
@@ -271,7 +283,8 @@ export default function DonatePage(): JSX.Element {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-400">Transaction</span>
                     <Link
-                      href={`https://basescan.org/tx/${txHash}`}
+                      // href={`https://basescan.org/tx/${txHash}`}
+                      href={`https://sepolia.basescan.org/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-green-400 hover:text-green-300 transition-colors group"
