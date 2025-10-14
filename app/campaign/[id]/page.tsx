@@ -3,12 +3,7 @@
 import { useEffect, useState, JSX } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -27,52 +22,31 @@ import {
   CheckCircle2,
   TrendingUp,
 } from "lucide-react";
-
-import { useReadContract } from "wagmi";
-import { CONTRACT_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
-import { fetchCampaigns } from "@/lib/helper/fetchCampaigns";
-import { Campaign } from "@/types";
+import { useCampaignStore } from "@/store/useCampaignStore";
+import formatCategory from "@/lib/helper/formatCategory";
 
 export default function CampaignDetailPage(): JSX.Element {
-  const params = useParams();
-  const campaignId = Number(params.id);
+  const { id } = useParams();
+  const { fetchSingle } = useCampaignStore();
+  const [campaign, setCampaign] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [userRole] = useState<"Admin" | "Member" | "Donor" | "Viewer">("Donor");
-
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [donations, setDonations] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const { data: totalCampaigns } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: "nextCampaignId",
-    chainId: 84532,
-  });
 
   useEffect(() => {
     async function load() {
-      if (!totalCampaigns || isNaN(campaignId)) return;
+      if (!id) return;
       setIsLoading(true);
       try {
-        const fetched = await fetchCampaigns(Number(totalCampaigns));
-        const found = fetched.find((c) => c.id === campaignId);
-        setCampaign(found || null);
-
-        // Optional: fetch donation and expense data from IPFS or event logs
-        // const donationData = await fetchDonations(campaignId);
-        // const expenseData = await fetchExpenses(campaignId);
-        // setDonations(donationData);
-        // setExpenses(expenseData);
-
-      } catch (err) {
-        console.error("Failed to load campaign", err);
+        const fetched = await fetchSingle(Number(id));
+        setCampaign(fetched);
       } finally {
         setIsLoading(false);
       }
     }
     load();
-  }, [totalCampaigns, campaignId]);
+  }, [id]);
 
   if (isLoading)
     return (
@@ -97,14 +71,14 @@ export default function CampaignDetailPage(): JSX.Element {
       </div>
     );
 
-  const progress = (campaign.totalDonations / campaign.goalAmount) * 100;
-  const totalExpenses = campaign.totalExpenses || 0;
+  const progress = (campaign.totalDonations / campaign.goalAmount) * 100 || 0;
   const remainingBalance =
     campaign.totalDonations - (campaign.totalExpenses || 0);
   const daysLeft = Math.max(
     0,
     Math.ceil(
-      (campaign.deadline * 1000 - Date.now()) / (1000 * 60 * 60 * 24)
+      (new Date(campaign.deadline).getTime() - Date.now()) /
+        (1000 * 60 * 60 * 24)
     )
   );
 
@@ -158,7 +132,7 @@ export default function CampaignDetailPage(): JSX.Element {
                     variant="outline"
                     className="bg-green-950/20 text-green-400 border-green-500/30"
                   >
-                    {campaign.category}
+                    {formatCategory(campaign.category)}
                   </Badge>
                   <RoleBadge role={userRole} />
                 </div>
@@ -193,7 +167,7 @@ export default function CampaignDetailPage(): JSX.Element {
                 <CardContent className="p-4 text-center">
                   <Users className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    {campaign.supportersCount || 0}
+                    {campaign.supportCount || 0}
                   </p>
                   <p className="text-xs text-gray-500">Supporters</p>
                 </CardContent>
@@ -223,7 +197,9 @@ export default function CampaignDetailPage(): JSX.Element {
                 </div>
                 <Progress value={progress} className="h-3 bg-gray-800" />
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
-                  <span>${campaign.totalDonations.toLocaleString()} raised</span>
+                  <span>
+                    ${campaign.totalDonations.toLocaleString()} raised
+                  </span>
                   <span>
                     $
                     {(
@@ -236,81 +212,8 @@ export default function CampaignDetailPage(): JSX.Element {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar (Financials + Verification) */}
           <div className="space-y-6">
-            {campaign.state === "Pending" && (
-              <SupportProgressBar
-                currentSupporters={campaign.supportersCount || 0}
-                requiredSupporters={50}
-                currentPledged={campaign.totalDonations}
-                requiredPledged={campaign.goalAmount / 2}
-                status={campaign.state}
-                deadline={campaign.deadline}
-              />
-            )}
-
-            {campaign.state === "Active" && (
-              <Card className="bg-gradient-to-br from-green-950/50 to-gray-950/50 border-green-500/50">
-                <CardContent className="p-6 space-y-4">
-                  <div className="text-center">
-                    <h3 className="text-lg font-bold text-green-50 mb-2">
-                      Support This Campaign
-                    </h3>
-                    <p className="text-sm text-gray-400 mb-4">
-                      Make a transparent, on-chain donation
-                    </p>
-                  </div>
-
-                  <Link href={`/donate/${campaign.id}`}>
-                    <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold text-lg py-6">
-                      <DollarSign className="mr-2 h-5 w-5" />
-                      Donate Now
-                    </Button>
-                  </Link>
-
-                  <div className="pt-4 border-t border-green-900/30">
-                    <p className="text-xs text-gray-500 text-center">
-                      All donations are on-chain and publicly verifiable
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Financial Summary */}
-            <Card className="bg-gray-950/50 border-green-900/30">
-              <CardHeader>
-                <CardTitle className="text-lg text-green-50">
-                  Financial Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Raised</span>
-                  <span className="font-semibold text-green-400">
-                    ${campaign.totalDonations.toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Expenses</span>
-                  <span className="font-semibold text-red-400">
-                    -${totalExpenses.toLocaleString()}
-                  </span>
-                </div>
-                <div className="pt-3 border-t border-green-900/30">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300 font-medium">
-                      Remaining Balance
-                    </span>
-                    <span className="text-xl font-bold text-green-400">
-                      ${remainingBalance.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* On-Chain Verification */}
             <Card className="bg-gray-950/50 border-green-900/30">
               <CardHeader>
                 <CardTitle className="text-lg text-green-50">
@@ -336,75 +239,56 @@ export default function CampaignDetailPage(): JSX.Element {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs (Donations/Expenses/Supporters) */}
         <Tabs defaultValue="donations" className="space-y-6">
           <TabsList className="bg-gray-950/50 border border-green-900/30">
-            <TabsTrigger
-              value="donations"
-              className="data-[state=active]:bg-green-900/30 data-[state=active]:text-green-400"
-            >
+            <TabsTrigger value="donations">
               Donations ({donations.length})
             </TabsTrigger>
-            <TabsTrigger
-              value="expenses"
-              className="data-[state=active]:bg-green-900/30 data-[state=active]:text-green-400"
-            >
+            <TabsTrigger value="expenses">
               Expenses ({expenses.length})
             </TabsTrigger>
-            <TabsTrigger
-              value="supporters"
-              className="data-[state=active]:bg-green-900/30 data-[state=active]:text-green-400"
-            >
-              Supporters ({campaign.supportersCount || 0})
+            <TabsTrigger value="supporters">
+              Supporters ({campaign.supportCount || 0})
             </TabsTrigger>
           </TabsList>
 
-          {/* Donations */}
-          <TabsContent value="donations" className="space-y-4">
+          <TabsContent value="donations">
             {donations.length > 0 ? (
               donations.map((donation) => (
                 <DonationCard key={donation.id} donation={donation} />
               ))
             ) : (
               <Card className="bg-gray-950/50 border-green-900/30">
-                <CardContent className="p-12 text-center">
-                  <DollarSign className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No donations yet</p>
+                <CardContent className="p-12 text-center text-gray-400">
+                  No donations yet
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
-          {/* Expenses */}
-          <TabsContent value="expenses" className="space-y-4">
-            {(userRole === "Admin" || userRole === "Member") && (
-              <Link href={`/expenses/${campaign.id}`}>
-                <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-black font-semibold">
-                  Log New Expense
-                </Button>
-              </Link>
-            )}
-
+          <TabsContent value="expenses">
             {expenses.length > 0 ? (
               expenses.map((expense) => (
-                <ExpenseCard key={expense.id} expense={expense} userRole={userRole} />
+                <ExpenseCard
+                  key={expense.id}
+                  expense={expense}
+                  userRole={userRole}
+                />
               ))
             ) : (
               <Card className="bg-gray-950/50 border-green-900/30">
-                <CardContent className="p-12 text-center">
-                  <Target className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-400">No expenses logged yet</p>
+                <CardContent className="p-12 text-center text-gray-400">
+                  No expenses logged yet
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
-          {/* Supporters */}
           <TabsContent value="supporters">
             <Card className="bg-gray-950/50 border-green-900/30">
-              <CardContent className="p-12 text-center">
-                <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <p className="text-gray-400">Supporter list coming soon</p>
+              <CardContent className="p-12 text-center text-gray-400">
+                Supporter list coming soon
               </CardContent>
             </Card>
           </TabsContent>

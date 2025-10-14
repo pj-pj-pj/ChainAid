@@ -14,7 +14,7 @@ export interface Campaign {
   category: string;
   ipfsHash?: string;
   state: CampaignState;
-
+  supportCount: number;
   status?: string;
   imageUrl?: string;
 }
@@ -26,6 +26,7 @@ export interface Supporter {
   pledgeAmount?: number;
   timestamp: string;
   ensName?: string;
+  receiptCid?: string;
 }
 
 export interface Donation {
