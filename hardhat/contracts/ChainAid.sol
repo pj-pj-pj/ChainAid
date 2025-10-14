@@ -64,20 +64,43 @@ contract ChainAid {
         payable(owner).transfer(address(this).balance);
     }
 
-    // Event emitted when a donation is received
-    event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amount);
+    // Donation struct and storage for donations per campaign
+    struct Donation {
+        uint256 id;
+        address donor;
+        uint256 amount;
+        uint256 timestamp;
+        string jsonCid; // IPFS CID for donation metadata JSON
+    }
+
+    // mapping from campaignId to list of donations
+    mapping(uint256 => Donation[]) public donations;
+
+    // Event emitted when a donation is received (includes pinned metadata CID)
+    event DonationReceived(uint256 indexed campaignId, address indexed donor, uint256 amount, string jsonCid);
 
     // Allow anyone to donate to an existing campaign. The sent value is recorded as totalDonations.
-    function donate(uint256 campaignId) external payable {
+    function donate(uint256 campaignId, string memory jsonCid) external payable {
         require(msg.value > 0, "Donation must be > 0");
         require(campaignId < nextCampaignId, "Invalid campaign");
 
         Campaign storage c = campaigns[campaignId];
-        require(c.state != CampaignState.Cancelled, "Campaign cancelled");
-        require(c.state != CampaignState.Completed, "Campaign completed");
 
+        // update campaign totals
         c.totalDonations += msg.value;
 
-        emit DonationReceived(campaignId, msg.sender, msg.value);
+        // record donation struct
+        uint256 donationId = donations[campaignId].length;
+        donations[campaignId].push(
+            Donation({
+                id: donationId,
+                donor: msg.sender,
+                amount: msg.value,
+                timestamp: block.timestamp,
+                jsonCid: jsonCid
+            })
+        );
+
+        emit DonationReceived(campaignId, msg.sender, msg.value, jsonCid);
     }
 }

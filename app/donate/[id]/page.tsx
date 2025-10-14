@@ -150,6 +150,38 @@ export default function DonatePage(): JSX.Element {
     setIsProcessing(true);
 
     try {
+      // Build donation metadata to pin to IPFS (pre-tx)
+      const donationMetaPreTx = {
+        campaignId: String(campaign.id),
+        campaignTitle: campaign.title,
+        donorAddress: address || "",
+        amount: Number(Number(amount)),
+        message: message || undefined,
+        timestamp: new Date().toISOString(),
+        nftMinted: mintNFT || undefined,
+      } as const;
+
+      toast.info("Uploading donation metadata to IPFS...");
+
+      // Pin metadata and require CID to include on-chain
+      const pinRes = await fetch("/api/pinata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donationMetaPreTx),
+      });
+      const pinJson = await pinRes.json();
+      if (!pinRes.ok || !pinJson?.cid) {
+        console.error("Failed to pin donation metadata", pinJson);
+        toast.error(
+          "Failed to pin donation metadata to IPFS. Donation aborted."
+        );
+        setIsProcessing(false);
+        return;
+      }
+
+      const receiptCid = pinJson.cid as string;
+      toast.success("Donation metadata pinned to IPFS");
+
       toast.info("Sending donation transaction...");
 
       // compute ETH amount from USD
@@ -157,11 +189,12 @@ export default function DonatePage(): JSX.Element {
 
       const contractAddress = CONTRACT_ADDRESS as `0x${string}`;
 
+      // Call donate with campaignId and jsonCid
       const tx = await writeContractAsync({
         address: contractAddress,
         abi: (ChainAidABI as any).abi,
         functionName: "donate",
-        args: [BigInt(campaign.id)],
+        args: [BigInt(campaign.id), receiptCid],
         value: parseEther(ethAmount),
       });
 
@@ -172,7 +205,7 @@ export default function DonatePage(): JSX.Element {
       const txHashStr = String(tx);
       setTxHash(txHashStr);
 
-      // Build Donation object (types/index.ts)
+      // Build Donation object (types/index.ts) and include receiptCid
       const donation: Donation = {
         id: `donation-${Date.now()}`,
         campaignId: String(campaign.id),
@@ -184,6 +217,7 @@ export default function DonatePage(): JSX.Element {
         nftMinted: mintNFT || undefined,
         ensName: undefined,
         campaignTitle: campaign.title,
+        receiptCid,
       };
 
       try {

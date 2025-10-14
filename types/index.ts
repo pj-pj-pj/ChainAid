@@ -19,7 +19,6 @@ export interface Campaign {
   imageUrl?: string;
 }
 
-
 export interface Supporter {
   id: string;
   address: string;
@@ -40,6 +39,7 @@ export interface Donation {
   nftMinted?: boolean;
   ensName?: string;
   campaignTitle: string;
+  receiptCid?: string;
 }
 
 export interface Expense {
