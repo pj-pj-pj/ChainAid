@@ -134,8 +134,8 @@ export default function CreateCampaignPage() {
         functionName: "createCampaign",
         args: [
           values.title,
-          values.description,
           values.organization,
+          values.description,
           goalAmountInWei,
           BigInt(deadlineTimestamp),
           values.category,
