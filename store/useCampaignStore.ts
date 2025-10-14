@@ -20,10 +20,15 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     if (get().hasLoaded) return; // already fetched
     set({ isLoading: true });
     try {
+      if (typeof window === 'undefined') {
+        set({ campaigns: [], hasLoaded: true });
+        return;
+      }
       const data = await fetchCampaigns(limit, offset);
       set({ campaigns: data, hasLoaded: true });
     } catch (error) {
       console.error("Failed to fetch campaigns:", error);
+      set({ campaigns: [], hasLoaded: true });
     } finally {
       set({ isLoading: false });
     }
