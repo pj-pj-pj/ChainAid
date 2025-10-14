@@ -14,7 +14,7 @@ export interface Campaign {
   category: string;
   ipfsHash?: string;
   state: CampaignState;
-
+  supportCount: number;
   status?: string;
   imageUrl?: string;
 }

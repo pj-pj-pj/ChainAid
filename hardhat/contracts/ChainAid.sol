@@ -8,6 +8,7 @@ contract ChainAid {
         uint256 id;
         address creator;
         string title;
+        string organization;
         string description;
         uint256 goalAmount;
         uint256 totalDonations;
@@ -16,12 +17,17 @@ contract ChainAid {
         string category;
         string ipfsHash;
         CampaignState state;
+        uint256 supportCount; // 🆕 number of supporters
     }
 
     mapping(uint256 => Campaign) public campaigns;
+    mapping(uint256 => mapping(address => bool)) public hasSupported; // 🆕 track if address already supported
+
     uint256 public nextCampaignId;
+    uint256[] public campaignIds;
 
     uint256 public constant CREATION_FEE = 0.0001 ether;
+    uint256 public constant ACTIVATION_THRESHOLD = 1; // 🆕 required supporters
     address public owner;
 
     constructor() {
@@ -30,6 +36,7 @@ contract ChainAid {
 
     function createCampaign(
         string memory _title,
+        string memory _organization,
         string memory _description,
         uint256 _goalAmount,
         uint256 _deadline,
@@ -38,7 +45,6 @@ contract ChainAid {
     ) public payable {
         require(msg.value == CREATION_FEE, "Incorrect creation fee");
 
-        // ✅ Optional IPFS handling — if empty, set default
         string memory finalIpfsHash = bytes(_ipfsHash).length > 0
             ? _ipfsHash
             : "none";
@@ -47,18 +53,57 @@ contract ChainAid {
         newCampaign.id = nextCampaignId;
         newCampaign.creator = msg.sender;
         newCampaign.title = _title;
+        newCampaign.organization = _organization;
         newCampaign.description = _description;
         newCampaign.goalAmount = _goalAmount;
         newCampaign.createdAt = block.timestamp;
-        newCampaign.deadline = _deadline;
+        newCampaign.deadline = block.timestamp + _deadline;
         newCampaign.category = _category;
         newCampaign.ipfsHash = finalIpfsHash;
         newCampaign.state = CampaignState.Pending;
+        newCampaign.supportCount = 0;
 
+        campaignIds.push(nextCampaignId);
         nextCampaignId++;
     }
 
-    // Optional: allow owner to withdraw the fees
+    // 🆕 Support a campaign
+    function supportCampaign(uint256 campaignId) external {
+        Campaign storage campaign = campaigns[campaignId];
+        require(campaign.creator != address(0), "Campaign does not exist");
+        require(campaign.state == CampaignState.Pending, "Campaign not in pending state");
+        require(!hasSupported[campaignId][msg.sender], "Already supported");
+
+        hasSupported[campaignId][msg.sender] = true;
+        campaign.supportCount++;
+
+        // 🆕 Auto-activate when threshold reached
+        if (campaign.supportCount >= ACTIVATION_THRESHOLD) {
+            campaign.state = CampaignState.Active;
+        }
+    }
+
+    function donateToCampaign(uint256 campaignId) external payable {
+        Campaign storage campaign = campaigns[campaignId];
+        require(campaign.creator != address(0), "Campaign does not exist");
+        require(campaign.state == CampaignState.Active, "Campaign is not active");
+        require(msg.value > 0, "Must send ETH to donate");
+        require(block.timestamp < campaign.deadline, "Campaign has ended");
+
+        campaign.totalDonations += msg.value;
+    }
+
+    function getAllCampaigns() external view returns (Campaign[] memory) {
+        uint256 count = campaignIds.length;
+        Campaign[] memory result = new Campaign[](count);
+
+        for (uint256 i = 0; i < count; i++) {
+            result[i] = campaigns[campaignIds[i]];
+        }
+
+        return result;
+    }
+
     function withdrawFees() external {
         require(msg.sender == owner, "Not authorized");
         payable(owner).transfer(address(this).balance);

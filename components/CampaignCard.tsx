@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { JSX } from "react";
+import formatCategory from "@/lib/helper/formatCategory";
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -21,7 +22,12 @@ interface CampaignCardProps {
 export default function CampaignCard({
   campaign,
 }: CampaignCardProps): JSX.Element {
+  // ! IDK PANO TO
   // const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
+
+  // ! Move this to helpers
+  // ! Calculate days left
+  // ! Mali kasi logic neto
   const daysLeft = Math.max(
     0,
     Math.ceil(
@@ -45,7 +51,11 @@ export default function CampaignCard({
     }
   };
 
-  console.log(campaign);
+  // TODO: Mali pa logic dito
+  const progress =
+    campaign.goalAmount > 0
+      ? Math.min((campaign.totalDonations / campaign.goalAmount) * 100, 100)
+      : 0;
 
   return (
     <Link href={`/campaign/${campaign.id}`}>
@@ -62,6 +72,7 @@ export default function CampaignCard({
               <TrendingUp className="w-16 h-16 text-green-500/30" />
             </div>
           )}
+          {}
         </div>
 
         <CardHeader>
@@ -69,19 +80,21 @@ export default function CampaignCard({
             <CardTitle className="text-lg font-bold text-green-50 group-hover:text-green-400 transition-colors line-clamp-2">
               {campaign.title}
             </CardTitle>
+            {/* // TODO: */}
             {/* {campaign.verified && (
               <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
             )} */}
           </div>
           <div className="flex flex-wrap gap-2">
-            {/* <Badge className={getStatusColor(campaign.status)}>
+            {/* // TODO: */}
+            {/* <Badge className={getStatusColor(campaign.status || "Unknown")}>
               {campaign.status}
             </Badge> */}
             <Badge
               variant="outline"
               className="bg-green-950/20 text-green-400 border-green-500/30"
             >
-              {campaign.category}
+              {formatCategory(campaign.category)}
             </Badge>
           </div>
         </CardHeader>
@@ -95,16 +108,12 @@ export default function CampaignCard({
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Raised</span>
               <span className="font-semibold text-green-400">
-                {/* ${campaign.currentAmount.toLocaleString()} / $
-                {campaign.goalAmount.toLocaleString()} */}
+                ${campaign.totalDonations} / ${campaign.goalAmount}
               </span>
             </div>
-            {/* <Progress
-              value={progress}
-              className="h-2 bg-gray-800"
-            >
+            <Progress value={progress} className="h-2 bg-gray-800">
               <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all" />
-            </Progress> */}
+            </Progress>
           </div>
 
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-green-900/30">
@@ -112,14 +121,14 @@ export default function CampaignCard({
               <Users className="w-4 h-4 text-green-500 mb-1" />
               <span className="text-xs text-gray-500">Donors</span>
               <span className="text-sm font-semibold text-green-400">
-                {/* {campaign.supporterCount} */}
+                {campaign.supportCount}
               </span>
             </div>
             <div className="flex flex-col items-center">
               <Target className="w-4 h-4 text-green-500 mb-1" />
               <span className="text-xs text-gray-500">Progress</span>
               <span className="text-sm font-semibold text-green-400">
-                {/* {Math.round(progress)}% */}
+                {Math.round(progress)}%
               </span>
             </div>
             <div className="flex flex-col items-center">
