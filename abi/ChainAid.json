@@ -6,6 +6,37 @@
       "type": "constructor"
     },
     {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "campaignId",
+          "type": "uint256"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "donor",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "jsonCid",
+          "type": "string"
+        }
+      ],
+      "name": "DonationReceived",
+      "type": "event"
+    },
+    {
       "inputs": [],
       "name": "ACTIVATION_THRESHOLD",
       "outputs": [
@@ -336,4 +367,4 @@
       "type": "function"
     }
   ]
- }
+}
