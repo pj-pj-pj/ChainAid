@@ -24,14 +24,14 @@ export default function ExplorePage() {
     fetchAll(12);
   }, []);
 
-  console.log("All campaigns:", campaigns);
-
-  const categories = [
-    "all",
-    ...campaigns
-      .map((c) => c.category)
-      .filter((cat, idx, arr) => cat && arr.indexOf(cat) === idx),
-  ];
+  // Calculate unique categories
+  const categoriesObject: { [key: string]: boolean } = {};
+  campaigns.forEach(campaign => {
+    if (campaign.category) {
+      categoriesObject[campaign.category] = true;
+    }
+  });
+  const categories = ["all", ...Object.keys(categoriesObject)];
 
   const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch =
