@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, JSX } from "react";
+import { useState, useEffect, JSX } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +10,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { mockCampaigns } from "@/utils/mockData";
+import { Campaign } from "@/types";
+import type { Donation } from "@/types";
+import { useAccount } from "wagmi";
+import { useWriteContract } from "wagmi";
+import { CONTRACT_ADDRESS } from "@/lib/contracts";
+import ChainAidABI from "@/abi/ChainAid.json";
+import { parseEther } from "viem";
+import { toast } from "sonner";
+import { useAppStore } from "@/store/useAppStore";
+import { fetchCampaign } from "@/lib/helper/fetchCampaigns";
 import {
   ArrowLeft,
   DollarSign,
   CheckCircle2,
   ExternalLink,
   Shield,
+  Info,
   Sparkles,
   Loader2,
 } from "lucide-react";
@@ -24,16 +34,90 @@ import {
 export default function DonatePage(): JSX.Element {
   const params = useParams();
   const router = useRouter();
-  const campaignId = params.id as string;
-  const campaign = mockCampaigns.find((c) => c.id === campaignId);
+  const campaignId = Number(params.id);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [isLoadingCampaign, setIsLoadingCampaign] = useState<boolean>(true);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setIsLoadingCampaign(true);
+      try {
+        const fetched = await fetchCampaign(campaignId);
+        if (!mounted) return;
+        setCampaign(fetched);
+      } catch (err) {
+        console.error("Failed to fetch campaign", err);
+        if (mounted) setCampaign(null);
+      } finally {
+        if (mounted) setIsLoadingCampaign(false);
+      }
+    }
+
+    if (!Number.isNaN(campaignId)) {
+      load();
+    } else {
+      setIsLoadingCampaign(false);
+      setCampaign(null);
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [campaignId]);
 
   const [amount, setAmount] = useState<string>("");
   const [message, setMessage] = useState<string>("");
+  const [ethPriceUsd, setEthPriceUsd] = useState<number | null>(null);
   const [mintNFT, setMintNFT] = useState<boolean>(false);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [txHash, setTxHash] = useState<string>("");
+  const { address, isConnected } = useAccount();
+  const { writeContractAsync } = useWriteContract();
+  const addDonation = useAppStore((s) => s.addDonation);
 
   const presetAmounts = [10, 25, 50, 100, 250, 500];
+
+  useEffect(() => {
+    let mounted = true;
+    async function fetchPrice() {
+      try {
+        const res = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+        );
+        const json = await res.json();
+        if (!mounted) return;
+        setEthPriceUsd(json?.ethereum?.usd ?? null);
+      } catch (err) {
+        console.error("Failed to fetch ETH price", err);
+        if (mounted) setEthPriceUsd(null);
+      }
+    }
+
+    fetchPrice();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  function usdToEth(usdString: string | number): string {
+    const usd =
+      typeof usdString === "number" ? usdString : parseFloat(String(usdString));
+    if (!ethPriceUsd || !isFinite(usd) || usd <= 0) return "0";
+    const eth = usd / ethPriceUsd;
+    return eth.toFixed(4);
+  }
+
+  if (isLoadingCampaign) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin mx-auto mb-4 text-green-400" />
+          <p className="text-gray-400">Loading campaign…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!campaign) {
     return (
@@ -53,15 +137,110 @@ export default function DonatePage(): JSX.Element {
   }
 
   const handleDonate = async (): Promise<void> => {
+    if (!isConnected || !address) {
+      toast.error("Please connect your wallet to donate");
+      return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      toast.error("Please enter a valid donation amount");
+      return;
+    }
+
     setIsProcessing(true);
 
-    // Simulate transaction
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    try {
+      // Build donation metadata to pin to IPFS (pre-tx)
+      const donationMetaPreTx = {
+        campaignId: String(campaign.id),
+        campaignTitle: campaign.title,
+        donorAddress: address || "",
+        amount: Number(Number(amount)),
+        message: message || undefined,
+        timestamp: new Date().toISOString(),
+        nftMinted: mintNFT || undefined,
+      } as const;
 
-    // Mock transaction hash
-    const mockTxHash = "0x" + Math.random().toString(16).substring(2, 66);
-    setTxHash(mockTxHash);
-    setIsProcessing(false);
+      toast.info("Uploading donation metadata to IPFS...");
+
+      // Pin metadata and require CID to include on-chain
+      const pinRes = await fetch("/api/pinata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(donationMetaPreTx),
+      });
+      const pinJson = await pinRes.json();
+      if (!pinRes.ok || !pinJson?.cid) {
+        console.error("Failed to pin donation metadata", pinJson);
+        toast.error(
+          "Failed to pin donation metadata to IPFS. Donation aborted."
+        );
+        setIsProcessing(false);
+        return;
+      }
+
+      const receiptCid = pinJson.cid as string;
+      toast.success("Donation metadata pinned to IPFS");
+
+      toast.info("Sending donation transaction...");
+
+      // compute ETH amount from USD
+      const ethAmount = usdToEth(amount || 0); // string
+
+      const contractAddress = CONTRACT_ADDRESS as `0x${string}`;
+
+      // Call donate with campaignId and jsonCid
+      const tx = await writeContractAsync({
+        address: contractAddress,
+        abi: (ChainAidABI as any).abi,
+        functionName: "donate",
+        args: [BigInt(campaign.id), receiptCid],
+        value: parseEther(ethAmount),
+      });
+
+      console.log("Donation tx sent:", tx);
+      toast.success("Donation transaction sent");
+
+      // record tx hash and update UI
+      const txHashStr = String(tx);
+      setTxHash(txHashStr);
+
+      // Build Donation object (types/index.ts) and include receiptCid
+      const donation: Donation = {
+        id: `donation-${Date.now()}`,
+        campaignId: String(campaign.id),
+        donorAddress: address || "",
+        amount: Number(Number(amount)), // USD amount stored as number
+        message: message || undefined,
+        timestamp: new Date().toISOString(),
+        txHash: txHashStr,
+        nftMinted: mintNFT || undefined,
+        ensName: undefined,
+        campaignTitle: campaign.title,
+        receiptCid,
+      };
+
+      try {
+        addDonation(donation);
+      } catch (err) {
+        console.warn("Failed to add donation to store", err);
+      }
+
+      // update local campaign totals optimistically
+      setCampaign((prev) => {
+        if (!prev) return prev;
+        const updated: Campaign = {
+          ...prev,
+          totalDonations: (prev.totalDonations || 0) + Number(donation.amount),
+        };
+        return updated;
+      });
+    } catch (error: any) {
+      console.error("Donation failed", error);
+      toast.error(error?.message || "Donation failed");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (txHash) {
@@ -86,7 +265,7 @@ export default function DonatePage(): JSX.Element {
                   <div className="flex justify-between">
                     <span className="text-gray-400">Amount</span>
                     <span className="font-semibold text-green-400">
-                      ${amount}
+                      {usdToEth(amount || 0)} ETH {`($${amount})`}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -103,14 +282,14 @@ export default function DonatePage(): JSX.Element {
                       <ExternalLink className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>
-                  {mintNFT && (
+                  {/* {mintNFT && (
                     <div className="pt-3 border-t border-green-900/30">
                       <div className="flex items-center gap-2 text-green-400">
                         <Sparkles className="w-4 h-4" />
                         <span className="text-sm">NFT receipt minted!</span>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               </div>
 
@@ -207,6 +386,16 @@ export default function DonatePage(): JSX.Element {
                     min="1"
                     className="bg-gray-900/50 border-green-900/30 text-green-50 placeholder:text-gray-500 focus:border-green-500"
                   />
+                  <p className="text-sm text-gray-400 mt-1">
+                    {ethPriceUsd ? (
+                      <>
+                        ≈ {usdToEth(amount || 0)} ETH{" "}
+                        {amount ? `($${amount})` : ""}
+                      </>
+                    ) : (
+                      <span>ETH price unavailable</span>
+                    )}
+                  </p>
                 </div>
 
                 {/* Message */}
@@ -267,7 +456,8 @@ export default function DonatePage(): JSX.Element {
                   ) : (
                     <>
                       <DollarSign className="mr-2 h-5 w-5" />
-                      Donate ${amount || "0"}
+                      Donate {`$${amount || "0"}`}{" "}
+                      {`(${usdToEth(amount || 0)} ETH)`}
                     </>
                   )}
                 </Button>
@@ -284,14 +474,14 @@ export default function DonatePage(): JSX.Element {
                 </CardTitle>
                 <div className="flex gap-2 mt-2">
                   <Badge className="bg-green-900/30 text-green-400 border-green-500/50">
-                    {campaign.status}
+                    {campaign.status}campaign.status
                   </Badge>
-                  {campaign.verified && (
+                  {/* {campaign.verified && (
                     <Badge className="bg-blue-900/30 text-blue-400 border-blue-500/50">
                       <CheckCircle2 className="w-3 h-3 mr-1" />
                       Verified
                     </Badge>
-                  )}
+                  )} */}
                 </div>
               </CardHeader>
 
@@ -300,7 +490,8 @@ export default function DonatePage(): JSX.Element {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Raised</span>
                     <span className="font-semibold text-green-400">
-                      ${campaign.currentAmount.toLocaleString()}
+                      {/* ${campaign.currentAmount.toLocaleString()} */}
+                      insert data
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -312,7 +503,7 @@ export default function DonatePage(): JSX.Element {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Donors</span>
                     <span className="font-semibold text-gray-300">
-                      {campaign.supporterCount}
+                      {/* {campaign.supporterCount} */}insert data
                     </span>
                   </div>
                 </div>
@@ -320,14 +511,26 @@ export default function DonatePage(): JSX.Element {
             </Card>
 
             <Card className="bg-green-950/20 border-green-900/30">
-              <CardContent className="p-6">
-                <Shield className="w-8 h-8 text-green-400 mb-3" />
+              <CardContent className="p-5 py-1">
+                <Shield className="w-8 h-5 text-green-400 mb-3" />
                 <h3 className="font-semibold text-green-50 mb-2">
                   Secure & Transparent
                 </h3>
                 <p className="text-sm text-gray-400">
                   All donations are processed on-chain via Base, ensuring
                   complete transparency and security.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-yellow-950/20 border-yellow-900/30">
+              <CardContent className="p-5 py-1">
+                <Info className="w-8 h-5 text-yellow-400 mb-3" />
+                <h3 className="font-semibold text-green-50 mb-2">Disclaimer</h3>
+                <p className="text-sm text-gray-400">
+                  Donation amounts entered in USD are converted to their ETH
+                  equivalent at the current market rate, and conversion rates
+                  may fluctuate at the time of transaction.
                 </p>
               </CardContent>
             </Card>
