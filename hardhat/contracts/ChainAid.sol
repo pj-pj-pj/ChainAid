@@ -113,22 +113,6 @@ contract ChainAid {
         campaign.verified = true;
     }
 
-    // 💸 Donate
-    function donateToCampaign(uint256 campaignId) external payable {
-        Campaign storage campaign = campaigns[campaignId];
-        require(campaign.creator != address(0), "Campaign does not exist");
-        require(campaign.state == CampaignState.Active, "Campaign is not active");
-        require(msg.value > 0, "Must send ETH to donate");
-        require(block.timestamp < campaign.deadline, "Campaign has ended");
-
-        campaign.totalDonations += msg.value;
-
-        if (donationsByAddress[campaignId][msg.sender] == 0) {
-            campaignDonators[campaignId].push(msg.sender);
-        }
-        donationsByAddress[campaignId][msg.sender] += msg.value;
-    }
-
     // 🧾 Record Expense (Creator Only)
     function recordExpense(uint256 campaignId, uint256 amount, string memory description) external {
         Campaign storage campaign = campaigns[campaignId];

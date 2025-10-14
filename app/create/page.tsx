@@ -132,8 +132,8 @@ export default function CreateCampaignPage() {
         functionName: "createCampaign",
         args: [
           formData.title,              // 1. title
-          formData.description,        // 2. description
           formData.organization,       // new  field: organization
+          formData.description,        // 2. description
           goalAmountInWei,             // 3. goal amount in wei
           BigInt(deadlineTimestamp),   // 4. deadline as uint256
           formData.category,           // 5. category
