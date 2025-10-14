@@ -19,7 +19,7 @@ import ChainAidABI from "@/abi/ChainAid.json";
 import { parseEther } from "viem";
 import { toast } from "sonner";
 import { useAppStore } from "@/store/useAppStore";
-import { fetchCampaign } from "@/lib/helper/fetchCampaigns";
+import { fetchCampaigns } from "@/lib/helper/fetchCampaigns";
 import {
   ArrowLeft,
   DollarSign,
@@ -43,7 +43,7 @@ export default function DonatePage(): JSX.Element {
     async function load() {
       setIsLoadingCampaign(true);
       try {
-        const fetched = await fetchCampaign(campaignId);
+        const fetched = await fetchCampaigns(campaignId);
         if (!mounted) return;
         setCampaign(fetched);
       } catch (err) {
@@ -497,7 +497,7 @@ export default function DonatePage(): JSX.Element {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">Goal</span>
                     <span className="font-semibold text-gray-300">
-                      ${campaign.goalAmount.toLocaleString()}
+                      {/* ${campaign.goalAmount.toLocaleString()} */}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">

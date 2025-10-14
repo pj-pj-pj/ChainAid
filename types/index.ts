@@ -26,6 +26,7 @@ export interface Supporter {
   pledgeAmount?: number;
   timestamp: string;
   ensName?: string;
+  receiptCid?: string;
 }
 
 export interface Donation {
