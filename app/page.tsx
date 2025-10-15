@@ -1,16 +1,29 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAppStore } from "@/store/useAppStore";
-import { mockCampaigns, mockDonations } from "@/utils/mockData";
 import StatCard from "@/components/StatCard";
 import CampaignCard from "@/components/CampaignCard";
 import DonationChart from "@/components/DonationChart";
 import TopDonors from "@/components/TopDonors";
-import { DollarSign, Users, TrendingUp, Heart } from "lucide-react";
+import {
+  DollarSign,
+  Users,
+  TrendingUp,
+  Heart,
+  ArrowRight,
+  ArrowRightCircle,
+} from "lucide-react";
 import { sdk } from "@farcaster/miniapp-sdk";
+import { useCampaignStore } from "@/store/useCampaignStore";
+import Link from "next/link";
 
 export default function DashboardPage() {
+  const { campaigns, isLoading, fetchAll } = useCampaignStore();
+
+  useEffect(() => {
+    fetchAll(12);
+  }, []);
+
   useEffect(() => {
     const initializeFarcaster = async () => {
       try {
@@ -45,16 +58,21 @@ export default function DashboardPage() {
     };
     initializeFarcaster();
   }, []);
-  const { campaigns, setCampaigns, setDonations } = useAppStore();
-
-  useEffect(() => {
-    setCampaigns(mockCampaigns);
-    setDonations(mockDonations);
-  }, [setCampaigns, setDonations]);
 
   const activeCampaigns = campaigns.filter((c) => c.status === "Active");
-  const totalRaised = campaigns.reduce((sum, c) => sum + c.currentAmount, 0);
-  const totalDonors = campaigns.reduce((sum, c) => sum + c.donors, 0);
+  const totalRaised = campaigns.reduce((sum, c) => sum + c.totalDonations, 0);
+  const totalDonors = campaigns.reduce((sum, c) => sum + c.supportCount, 0);
+  const avgDonation = totalDonors > 0 ? totalRaised / campaigns.length : 0;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-400">Loading campaigns…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black px-4 py-8 pt-12 sm:px-6 lg:px-8">
@@ -73,56 +91,69 @@ export default function DashboardPage() {
             title="Total Raised"
             value={`${totalRaised.toLocaleString()} ETH`}
             icon={DollarSign}
-            trend="+12.5% from last month"
+            trend="Donations collected across campaigns"
             trendUp={true}
           />
           <StatCard
             title="Active Campaigns"
             value={activeCampaigns.length.toString()}
             icon={Heart}
-            trend="+3 new this week"
+            trend="Campaigns currently accepting donations"
             trendUp={true}
           />
           <StatCard
             title="Total Donors"
             value={totalDonors.toLocaleString()}
             icon={Users}
-            trend="+234 this month"
+            trend="Unique supporters who donated"
             trendUp={true}
           />
           <StatCard
             title="Avg Donation"
-            value="0.45 ETH"
+            value={`${avgDonation.toFixed(3)} ETH`}
             icon={TrendingUp}
-            trend="+8.2% from last month"
+            trend="Average donation per donor across campaigns"
             trendUp={true}
           />
         </div>
 
         {/* Chart and Top Donors */}
-        <div className="mb-8 grid gap-6 lg:grid-cols-3">
+        {/* <div className="mb-8 grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <DonationChart />
           </div>
           <div>
             <TopDonors />
           </div>
-        </div>
+        </div> */}
 
         {/* Featured Campaigns */}
         <div>
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex items-center gap-4">
             <h2 className="text-2xl font-bold text-white">
               Featured Campaigns
             </h2>
+            <Link
+              href="/explore"
+              className="px-2 py-1 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-green-400"
+            >
+              <ArrowRight className="inline-block w-5 h-5 mr-1" />
+            </Link>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {activeCampaigns.slice(0, 3).map((campaign) => (
-              <CampaignCard
-                key={campaign.id}
-                campaign={campaign}
-              />
-            ))}
+            {(() => {
+              const topCampaigns = [...campaigns]
+                .sort(
+                  (a, b) => (b.totalDonations || 0) - (a.totalDonations || 0)
+                )
+                .slice(0, 3);
+              return topCampaigns.map((campaign) => (
+                <CampaignCard
+                  key={campaign.id}
+                  campaign={campaign}
+                />
+              ));
+            })()}
           </div>
         </div>
       </div>
