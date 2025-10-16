@@ -21,6 +21,7 @@ import {
   Target,
   CheckCircle2,
   TrendingUp,
+  Box,
 } from "lucide-react";
 import { useCampaignStore } from "@/store/useCampaignStore";
 import formatCategory from "@/lib/helper/formatCategory";
@@ -153,9 +154,9 @@ export default function CampaignDetailPage(): JSX.Element {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <Card className="bg-gray-950/50 border-green-900/30">
                 <CardContent className="p-4 text-center">
-                  <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
+                  <Box className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    ${campaign.totalDonations.toLocaleString()}
+                    ⧫ {campaign.totalDonations.toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">Raised</p>
                 </CardContent>
@@ -165,7 +166,7 @@ export default function CampaignDetailPage(): JSX.Element {
                 <CardContent className="p-4 text-center">
                   <Target className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    ${campaign.goalAmount.toLocaleString()}
+                    ⧫ {campaign.goalAmount.toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">Goal</p>
                 </CardContent>
@@ -209,10 +210,10 @@ export default function CampaignDetailPage(): JSX.Element {
                 />
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
                   <span>
-                    ${campaign.totalDonations.toLocaleString()} raised
+                    ⧫ {campaign.totalDonations.toLocaleString()} raised
                   </span>
                   <span>
-                    $
+                    ⧫{" "}
                     {(
                       campaign.goalAmount - campaign.totalDonations
                     ).toLocaleString()}{" "}

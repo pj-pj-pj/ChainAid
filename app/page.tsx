@@ -11,7 +11,7 @@ import {
   TrendingUp,
   Heart,
   ArrowRight,
-  ArrowRightCircle,
+  Box,
 } from "lucide-react";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { useCampaignStore } from "@/store/useCampaignStore";
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           <StatCard
             title="Total Raised"
             value={`${totalRaised.toLocaleString()} ETH`}
-            icon={DollarSign}
+            icon={Box}
             trend="Donations collected across campaigns"
             trendUp={true}
           />
