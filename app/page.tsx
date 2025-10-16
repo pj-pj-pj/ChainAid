@@ -85,6 +85,15 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        {/* Banner Image */}
+        <div className="mb-8 overflow-hidden rounded-lg h-48 md:h-72">
+          <img
+            src="/bannerimg.png"
+            alt="Dashboard Banner"
+            className="w-full h-full object-cover object-[50%_54%]"
+          />
+        </div>
+
         {/* Stats Grid */}
         <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
