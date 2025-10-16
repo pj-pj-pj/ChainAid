@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Users, DollarSign, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { JSX } from "react";
+import { daysLeftFromNow } from "@/lib/helper/fetchCampaigns";
 
 interface SupportProgressBarProps {
   currentSupporters: number;
@@ -26,12 +27,7 @@ export default function SupportProgressBar({
   const supporterProgress = (currentSupporters / requiredSupporters) * 100;
   const pledgeProgress = (currentPledged / requiredPledged) * 100;
   const isActivated = status === "Active";
-  const daysLeft = Math.max(
-    0,
-    Math.ceil(
-      (new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    )
-  );
+  const daysLeft = daysLeftFromNow(deadline);
 
   return (
     <Card className="bg-gradient-to-br from-gray-950/80 to-green-950/20 border-green-900/30">

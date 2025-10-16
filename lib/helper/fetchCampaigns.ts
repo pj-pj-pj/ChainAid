@@ -1,16 +1,56 @@
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
-import { Campaign } from "@/types";
+import { Campaign, Donation } from "@/types";
 
 const RPC_URL = "https://base-sepolia-rpc.publicnode.com";
 
-const IPFS_GATEWAYS = [
-  `https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/`,
-];
+const IPFS_GATEWAYS = [`https://${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/`];
 
 // --- In-memory IPFS cache ---
 const ipfsCache = new Map<string, any>();
+
+// --- Date helpers (exported) ---
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+export function parseDateSafe(
+  raw?: string | number | Date | null
+): Date | null {
+  if (raw == null) return null;
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+  if (typeof raw === "number") {
+    // treat numbers <= 1e12 as seconds
+    const ms = raw > 1e12 ? raw : raw * 1000;
+    const d = new Date(ms);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  if (typeof raw === "string") {
+    const s = raw.trim();
+    if (/^\d+$/.test(s)) {
+      // numeric string
+      const ms = s.length <= 10 ? Number(s) * 1000 : Number(s);
+      const d = new Date(ms);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  return null;
+}
+
+export function daysLeftFromNow(
+  deadlineRaw?: string | number | Date | null,
+  { roundUp = true }: { roundUp?: boolean } = {}
+): number {
+  const deadline = parseDateSafe(deadlineRaw);
+  if (!deadline) return 0;
+  const diffMs = deadline.getTime() - Date.now();
+  if (diffMs <= 0) return 0;
+  const days = diffMs / MS_PER_DAY;
+  return Math.max(0, roundUp ? Math.ceil(days) : Math.floor(days));
+}
 
 export async function fetchIpfsMetadata(ipfsHash: string): Promise<any | null> {
   if (!ipfsHash) return null;
@@ -33,7 +73,10 @@ export async function fetchIpfsMetadata(ipfsHash: string): Promise<any | null> {
 }
 
 // --- Main fetch function with multicall ---
-export async function fetchCampaigns(limit = 10, offset = 0): Promise<Campaign[]> {
+export async function fetchCampaigns(
+  limit = 10,
+  offset = 0
+): Promise<Campaign[]> {
   const client = createPublicClient({
     chain: baseSepolia,
     transport: http(RPC_URL),
@@ -104,6 +147,32 @@ export async function fetchCampaigns(limit = 10, offset = 0): Promise<Campaign[]
 
       const metadata = await fetchIpfsMetadata(ipfsHash);
 
+      // Map numeric on-chain state -> human-friendly string
+      const mapState = (num: number | bigint) => {
+        const n = Number(num);
+        switch (n) {
+          case 0:
+            return "Pending" as const;
+          case 1:
+            return "Active" as const;
+          case 2:
+            return "Cancelled" as const;
+          case 3:
+            return "Completed" as const;
+          default:
+            return "Pending" as const;
+        }
+      };
+
+      let stateStr = mapState(state);
+      try {
+        if (daysLeftFromNow(Number(new Date(metadata?.deadline))) <= 0) {
+          stateStr = "Completed";
+        }
+      } catch (e) {
+        // ignore
+      }
+
       return {
         id: Number(id),
         creator,
@@ -112,12 +181,12 @@ export async function fetchCampaigns(limit = 10, offset = 0): Promise<Campaign[]
         description: metadata?.description || description,
         goalAmount: Number(goalAmount) / 1e18,
         totalDonations: Number(totalDonations) / 1e18,
-        createdAt: createdAt > 0n ? new Date(Number(createdAt) * 1000) : null,
-        deadline: deadline > 0n ? new Date(Number(deadline) * 1000) : null,
+        createdAt: new Date(metadata?.createdAt),
+        deadline: new Date(metadata?.deadline),
         category: metadata?.category || category,
         ipfsHash,
         imageUrl: metadata?.imageUrl || `/category/${category}.jpg`,
-        state: Number(state),
+        state: stateStr,
         supportCount: Number(supportCount),
         verified: metadata?.verified || false,
         supporterThreshold: metadata?.supporterThreshold || 50,
@@ -175,20 +244,44 @@ export async function fetchCampaignById(id: number): Promise<Campaign | null> {
 
     const metadata = await fetchIpfsMetadata(ipfsHash);
 
+    const mapState = (num: number | bigint) => {
+      const n = Number(num);
+      switch (n) {
+        case 0:
+          return "Pending" as const;
+        case 1:
+          return "Active" as const;
+        case 2:
+          return "Cancelled" as const;
+        case 3:
+          return "Completed" as const;
+        default:
+          return "Pending" as const;
+      }
+    };
+
+    let stateStr = mapState(state);
+    try {
+      if (daysLeftFromNow(Number(new Date(metadata?.deadline))) <= 0) {
+        stateStr = "Completed";
+      }
+    } catch (e) {
+      // ignore
+    }
+
     return {
       id: Number(campaignId),
       creator,
       title: metadata?.title || title,
-      organization: metadata?.organizationName || organization,
       description: metadata?.description || description,
       goalAmount: Number(goalAmount) / 1e18,
       totalDonations: Number(totalDonations) / 1e18,
-      createdAt: createdAt > 0n ? new Date(Number(createdAt) * 1000) : null,
-      deadline: deadline > 0n ? new Date(Number(deadline) * 1000) : null,
+      createdAt: new Date(metadata?.createdAt),
+      deadline: new Date(metadata?.deadline),
       category: metadata?.category || category,
       ipfsHash,
       imageUrl: metadata?.imageUrl || `/category/${category}.jpg`,
-      state: Number(state),
+      state: stateStr,
       supportCount: Number(supportCount),
       verified: metadata?.verified || false,
       supporterThreshold: metadata?.supporterThreshold || 50,
@@ -199,3 +292,54 @@ export async function fetchCampaignById(id: number): Promise<Campaign | null> {
   }
 }
 
+// --- Fetch donations for a campaign ---
+export async function fetchDonations(
+  campaignId: number
+): Promise<Donation[] | null> {
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: http(RPC_URL),
+  });
+
+  try {
+    const donations = (await client.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: "getDonations",
+      args: [BigInt(campaignId)],
+    })) as readonly any[];
+
+    return await Promise.all(
+      donations.map(async (donation, index) => {
+        // Access struct fields by property name instead of destructuring
+        const donor = donation.donor || donation[0];
+        const amount = donation.amount || donation[1];
+        const timestamp = donation.timestamp || donation[2];
+        const jsonCid = donation.jsonCid || donation[3];
+
+        const donationMetadata = jsonCid
+          ? await fetchIpfsMetadata(jsonCid)
+          : null;
+
+        return {
+          id: `${campaignId}-${index}`,
+          campaignId: campaignId.toString(),
+          donorAddress: donor,
+          amount: Number(amount) / 1e18,
+          timestamp: new Date(Number(timestamp) * 1000).toISOString(),
+          txHash: donationMetadata?.txHash || "",
+          receiptCid: jsonCid || undefined,
+          message: donationMetadata?.message,
+          campaignTitle: donationMetadata?.campaignTitle || "",
+          ensName: donationMetadata?.ensName,
+        };
+      })
+    );
+  } catch (error) {
+    console.error(
+      `❌ Failed to fetch donations for campaign ${campaignId}:`,
+      error
+    );
+    return [];
+  }
+}

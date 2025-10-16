@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { useAppStore } from "@/store/useAppStore";
-import { mockCampaigns } from "@/utils/mockData";
 import CampaignCard from "@/components/CampaignCard";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,20 +9,22 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { useCampaignStore } from "@/store/useCampaignStore";
+import { Campaign } from "@/types";
 
 export default function MyCampaignsPage() {
+  const { campaigns, isLoading, fetchAll } = useCampaignStore();
   const { address, isConnected } = useAccount();
-  const { campaigns, setCampaigns } = useAppStore();
   const [activeTab, setActiveTab] = useState("all");
+  const [myCampaigns, setMyCampaigns] = useState<Campaign[]>([]);
 
   useEffect(() => {
-    setCampaigns(mockCampaigns);
-  }, [setCampaigns]);
+    if (!campaigns || campaigns.length === 0) fetchAll?.(12);
 
-  // Filter campaigns created by current user
-  const myCampaigns = campaigns.filter(
-    (c) => c.creatorAddress.toLowerCase() === address?.toLowerCase()
-  );
+    setMyCampaigns(
+      campaigns.filter((c) => !!c.creator && c.creator === address)
+    );
+  }, [campaigns, address, isLoading]);
   const activeCampaigns = myCampaigns.filter((c) => c.status === "Active");
   const completedCampaigns = myCampaigns.filter(
     (c) => c.status === "Completed"

@@ -1,10 +1,6 @@
 {
   "abi": [
-    {
-      "inputs": [],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
+    { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
     {
       "anonymous": false,
       "inputs": [
@@ -39,113 +35,43 @@
     {
       "inputs": [],
       "name": "ACTIVATION_THRESHOLD",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "CREATION_FEE",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "name": "campaignIds",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "name": "campaigns",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "creator",
-          "type": "address"
-        },
-        {
-          "internalType": "string",
-          "name": "title",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "organization",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "description",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "goalAmount",
-          "type": "uint256"
-        },
+        { "internalType": "uint256", "name": "id", "type": "uint256" },
+        { "internalType": "address", "name": "creator", "type": "address" },
+        { "internalType": "string", "name": "title", "type": "string" },
+        { "internalType": "string", "name": "organization", "type": "string" },
+        { "internalType": "string", "name": "description", "type": "string" },
+        { "internalType": "uint256", "name": "goalAmount", "type": "uint256" },
         {
           "internalType": "uint256",
           "name": "totalDonations",
           "type": "uint256"
         },
-        {
-          "internalType": "uint256",
-          "name": "createdAt",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "deadline",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "category",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "ipfsHash",
-          "type": "string"
-        },
+        { "internalType": "uint256", "name": "createdAt", "type": "uint256" },
+        { "internalType": "uint256", "name": "deadline", "type": "uint256" },
+        { "internalType": "string", "name": "category", "type": "string" },
+        { "internalType": "string", "name": "ipfsHash", "type": "string" },
         {
           "internalType": "enum ChainAid.CampaignState",
           "name": "state",
@@ -156,11 +82,7 @@
           "name": "supportCount",
           "type": "uint256"
         },
-        {
-          "internalType": "bool",
-          "name": "verified",
-          "type": "bool"
-        },
+        { "internalType": "bool", "name": "verified", "type": "bool" },
         {
           "internalType": "uint256",
           "name": "totalExpenses",
@@ -172,41 +94,13 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "string",
-          "name": "_title",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "_organization",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "_description",
-          "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_goalAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_deadline",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "_category",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "_ipfsHash",
-          "type": "string"
-        }
+        { "internalType": "string", "name": "_title", "type": "string" },
+        { "internalType": "string", "name": "_organization", "type": "string" },
+        { "internalType": "string", "name": "_description", "type": "string" },
+        { "internalType": "uint256", "name": "_goalAmount", "type": "uint256" },
+        { "internalType": "uint256", "name": "_deadline", "type": "uint256" },
+        { "internalType": "string", "name": "_category", "type": "string" },
+        { "internalType": "string", "name": "_ipfsHash", "type": "string" }
       ],
       "name": "createCampaign",
       "outputs": [],
@@ -215,16 +109,8 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "jsonCid",
-          "type": "string"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" },
+        { "internalType": "string", "name": "jsonCid", "type": "string" }
       ],
       "name": "donate",
       "outputs": [],
@@ -233,57 +119,16 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
-      ],
-      "name": "donateToCampaign",
-      "outputs": [],
-      "stateMutability": "payable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "uint256", "name": "", "type": "uint256" }
       ],
       "name": "donations",
       "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "id",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "donor",
-          "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "timestamp",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "jsonCid",
-          "type": "string"
-        }
+        { "internalType": "uint256", "name": "id", "type": "uint256" },
+        { "internalType": "address", "name": "donor", "type": "address" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" },
+        { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+        { "internalType": "string", "name": "jsonCid", "type": "string" }
       ],
       "stateMutability": "view",
       "type": "function"
@@ -294,21 +139,9 @@
       "outputs": [
         {
           "components": [
-            {
-              "internalType": "uint256",
-              "name": "id",
-              "type": "uint256"
-            },
-            {
-              "internalType": "address",
-              "name": "creator",
-              "type": "address"
-            },
-            {
-              "internalType": "string",
-              "name": "title",
-              "type": "string"
-            },
+            { "internalType": "uint256", "name": "id", "type": "uint256" },
+            { "internalType": "address", "name": "creator", "type": "address" },
+            { "internalType": "string", "name": "title", "type": "string" },
             {
               "internalType": "string",
               "name": "organization",
@@ -339,16 +172,8 @@
               "name": "deadline",
               "type": "uint256"
             },
-            {
-              "internalType": "string",
-              "name": "category",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "ipfsHash",
-              "type": "string"
-            },
+            { "internalType": "string", "name": "category", "type": "string" },
+            { "internalType": "string", "name": "ipfsHash", "type": "string" },
             {
               "internalType": "enum ChainAid.CampaignState",
               "name": "state",
@@ -359,11 +184,7 @@
               "name": "supportCount",
               "type": "uint256"
             },
-            {
-              "internalType": "bool",
-              "name": "verified",
-              "type": "bool"
-            },
+            { "internalType": "bool", "name": "verified", "type": "bool" },
             {
               "internalType": "uint256",
               "name": "totalExpenses",
@@ -380,23 +201,25 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
       ],
-      "name": "getDonators",
+      "name": "getDonations",
       "outputs": [
         {
-          "internalType": "address[]",
+          "components": [
+            { "internalType": "uint256", "name": "id", "type": "uint256" },
+            { "internalType": "address", "name": "donor", "type": "address" },
+            { "internalType": "uint256", "name": "amount", "type": "uint256" },
+            {
+              "internalType": "uint256",
+              "name": "timestamp",
+              "type": "uint256"
+            },
+            { "internalType": "string", "name": "jsonCid", "type": "string" }
+          ],
+          "internalType": "struct ChainAid.Donation[]",
           "name": "",
-          "type": "address[]"
-        },
-        {
-          "internalType": "uint256[]",
-          "name": "",
-          "type": "uint256[]"
+          "type": "tuple[]"
         }
       ],
       "stateMutability": "view",
@@ -404,21 +227,25 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
+      ],
+      "name": "getDonators",
+      "outputs": [
+        { "internalType": "address[]", "name": "", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "", "type": "uint256[]" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
       ],
       "name": "getExpenses",
       "outputs": [
         {
           "components": [
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            },
+            { "internalType": "uint256", "name": "amount", "type": "uint256" },
             {
               "internalType": "string",
               "name": "description",
@@ -429,11 +256,7 @@
               "name": "timestamp",
               "type": "uint256"
             },
-            {
-              "internalType": "address",
-              "name": "spender",
-              "type": "address"
-            }
+            { "internalType": "address", "name": "spender", "type": "address" }
           ],
           "internalType": "struct ChainAid.Expense[]",
           "name": "",
@@ -445,90 +268,44 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
       ],
       "name": "getSupporters",
       "outputs": [
-        {
-          "internalType": "address[]",
-          "name": "",
-          "type": "address[]"
-        }
+        { "internalType": "address[]", "name": "", "type": "address[]" }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
+        { "internalType": "uint256", "name": "", "type": "uint256" },
+        { "internalType": "address", "name": "", "type": "address" }
       ],
       "name": "hasSupported",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "nextCampaignId",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [],
       "name": "owner",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
       "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "string",
-          "name": "description",
-          "type": "string"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" },
+        { "internalType": "string", "name": "description", "type": "string" }
       ],
       "name": "recordExpense",
       "outputs": [],
@@ -537,11 +314,7 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
       ],
       "name": "supportCampaign",
       "outputs": [],
@@ -550,11 +323,7 @@
     },
     {
       "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "campaignId",
-          "type": "uint256"
-        }
+        { "internalType": "uint256", "name": "campaignId", "type": "uint256" }
       ],
       "name": "verifyCampaign",
       "outputs": [],

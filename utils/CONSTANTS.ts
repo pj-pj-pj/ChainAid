@@ -1,31 +1,31 @@
 const CATEGORIES = [
   {
     name: "Healthcare",
-    value: "healthcare",
+    value: "Healthcare",
   },
   {
     name: "Education",
-    value: "education",
+    value: "Education",
   },
   {
     name: "Environment",
-    value: "environment",
+    value: "Environment",
   },
   {
     name: "Water and Sanitation",
-    value: "water-and-sanitation",
+    value: "Water and Sanitation",
   },
   {
     name: "Emergency Relief",
-    value: "emergency-relief",
+    value: "Emergency Relief",
   },
   {
     name: "Community Development",
-    value: "community-development",
+    value: "Community Development",
   },
   {
     name: "Other",
-    value: "other",
+    value: "Other",
   },
 ];
 
