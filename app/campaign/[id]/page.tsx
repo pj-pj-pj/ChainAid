@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useCampaignStore } from "@/store/useCampaignStore";
 import formatCategory from "@/lib/helper/formatCategory";
-import { daysLeftFromNow } from "@/lib/helper/fetchCampaigns";
+import { daysLeftFromNow, fetchDonations } from "@/lib/helper/fetchCampaigns";
 import { useAccount } from "wagmi";
 
 export default function CampaignDetailPage(): JSX.Element {
@@ -55,6 +55,12 @@ export default function CampaignDetailPage(): JSX.Element {
             console.warn("campaign creator/address compare failed", e);
           }
         }
+
+        // Fetch donations for this campaign
+        const fetchedDonations = await fetchDonations(Number(id));
+        setDonations(fetchedDonations || []);
+
+        console.log(Number(id));
       } finally {
         setIsLoading(false);
       }
@@ -155,7 +161,8 @@ export default function CampaignDetailPage(): JSX.Element {
                 <CardContent className="p-4 text-center">
                   <Box className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    ⧫ {campaign.totalDonations.toLocaleString()}
+                    {campaign.totalDonations.toLocaleString()}{" "}
+                    <span className="text-s">ETH</span>
                   </p>
                   <p className="text-xs text-gray-500">Raised</p>
                 </CardContent>
@@ -165,7 +172,8 @@ export default function CampaignDetailPage(): JSX.Element {
                 <CardContent className="p-4 text-center">
                   <Target className="w-6 h-6 text-green-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-green-400">
-                    ⧫ {campaign.goalAmount.toLocaleString()}
+                    {campaign.goalAmount.toLocaleString()}{" "}
+                    <span className="text-s">ETH</span>
                   </p>
                   <p className="text-xs text-gray-500">Goal</p>
                 </CardContent>
@@ -209,14 +217,14 @@ export default function CampaignDetailPage(): JSX.Element {
                 />
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
                   <span>
-                    ⧫ {campaign.totalDonations.toLocaleString()} raised
+                    {campaign.totalDonations.toLocaleString()}{" "}
+                    <span className="text-xs">ETH</span> raised
                   </span>
                   <span>
-                    ⧫{" "}
                     {(
                       campaign.goalAmount - campaign.totalDonations
                     ).toLocaleString()}{" "}
-                    remaining
+                    <span className="text-xs">ETH</span> remaining
                   </span>
                 </div>
               </CardContent>

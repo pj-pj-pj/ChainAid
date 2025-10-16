@@ -93,7 +93,8 @@ export default function CampaignCard({
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">Raised</span>
               <span className="font-semibold text-green-400">
-                ⧫ {campaign.totalDonations} / ⧫ {campaign.goalAmount}
+                {campaign.totalDonations} / {campaign.goalAmount}{" "}
+                <span>ETH</span>
               </span>
             </div>
             <Progress

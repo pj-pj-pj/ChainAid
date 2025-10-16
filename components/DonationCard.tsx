@@ -47,9 +47,8 @@ export default function DonationCard({
             </div>
           </div>
           <div className="flex items-center gap-1 bg-green-900/30 px-3 py-1 rounded-lg border border-green-500/30">
-            <DollarSign className="w-4 h-4 text-green-400" />
             <span className="text-lg font-bold text-green-400">
-              {donation.amount.toLocaleString()}
+              {donation.amount.toLocaleString()} ETH
             </span>
           </div>
         </div>

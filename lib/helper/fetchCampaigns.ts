@@ -1,7 +1,7 @@
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { CONTRACT_ABI, CONTRACT_ADDRESS } from "@/lib/contracts";
-import { Campaign } from "@/types";
+import { Campaign, Donation } from "@/types";
 
 const RPC_URL = "https://base-sepolia-rpc.publicnode.com";
 
@@ -289,5 +289,57 @@ export async function fetchCampaignById(id: number): Promise<Campaign | null> {
   } catch (error) {
     console.error(`❌ Failed to fetch campaign ${id}:`, error);
     return null;
+  }
+}
+
+// --- Fetch donations for a campaign ---
+export async function fetchDonations(
+  campaignId: number
+): Promise<Donation[] | null> {
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: http(RPC_URL),
+  });
+
+  try {
+    const donations = (await client.readContract({
+      address: CONTRACT_ADDRESS,
+      abi: CONTRACT_ABI,
+      functionName: "getDonations",
+      args: [BigInt(campaignId)],
+    })) as readonly any[];
+
+    return await Promise.all(
+      donations.map(async (donation, index) => {
+        // Access struct fields by property name instead of destructuring
+        const donor = donation.donor || donation[0];
+        const amount = donation.amount || donation[1];
+        const timestamp = donation.timestamp || donation[2];
+        const jsonCid = donation.jsonCid || donation[3];
+
+        const donationMetadata = jsonCid
+          ? await fetchIpfsMetadata(jsonCid)
+          : null;
+
+        return {
+          id: `${campaignId}-${index}`,
+          campaignId: campaignId.toString(),
+          donorAddress: donor,
+          amount: Number(amount) / 1e18,
+          timestamp: new Date(Number(timestamp) * 1000).toISOString(),
+          txHash: donationMetadata?.txHash || "",
+          receiptCid: jsonCid || undefined,
+          message: donationMetadata?.message,
+          campaignTitle: donationMetadata?.campaignTitle || "",
+          ensName: donationMetadata?.ensName,
+        };
+      })
+    );
+  } catch (error) {
+    console.error(
+      `❌ Failed to fetch donations for campaign ${campaignId}:`,
+      error
+    );
+    return [];
   }
 }
