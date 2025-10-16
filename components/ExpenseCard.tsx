@@ -16,7 +16,7 @@ import { JSX } from "react";
 
 interface ExpenseCardProps {
   expense: Expense;
-  userRole?: "Admin" | "Member" | "Donor" | "Viewer";
+  userRole?: "Admin" | "Donor" | "";
   onApprove?: (expenseId: string) => void;
 }
 

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { JSX } from "react";
 import formatCategory from "@/lib/helper/formatCategory";
+import { daysLeftFromNow } from "@/lib/helper/fetchCampaigns";
 
 interface CampaignCardProps {
   campaign: Campaign;
@@ -22,19 +23,7 @@ interface CampaignCardProps {
 export default function CampaignCard({
   campaign,
 }: CampaignCardProps): JSX.Element {
-  // ! IDK PANO TO
-  // const progress = (campaign.currentAmount / campaign.goalAmount) * 100;
-
-  // ! Move this to helpers
-  // ! Calculate days left
-  // ! Mali kasi logic neto
-  const daysLeft = Math.max(
-    0,
-    Math.ceil(
-      (new Date(campaign.deadline || Date.now()).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24)
-    )
-  );
+  const daysLeft = daysLeftFromNow(campaign.deadline);
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -51,11 +40,7 @@ export default function CampaignCard({
     }
   };
 
-  // TODO: Mali pa logic dito
-  const progress =
-    campaign.goalAmount > 0
-      ? Math.min((campaign.totalDonations / campaign.goalAmount) * 100, 100)
-      : 0;
+  const progress = (campaign.totalDonations / campaign.goalAmount) * 100 || 0;
 
   return (
     <Link href={`/campaign/${campaign.id}`}>
@@ -111,7 +96,10 @@ export default function CampaignCard({
                 ${campaign.totalDonations} / ${campaign.goalAmount}
               </span>
             </div>
-            <Progress value={progress} className="h-2 bg-gray-800">
+            <Progress
+              value={progress}
+              className="h-2 bg-gray-800"
+            >
               <div className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all" />
             </Progress>
           </div>
@@ -128,7 +116,7 @@ export default function CampaignCard({
               <Target className="w-4 h-4 text-green-500 mb-1" />
               <span className="text-xs text-gray-500">Progress</span>
               <span className="text-sm font-semibold text-green-400">
-                {Math.round(progress)}%
+                {(Math.trunc(progress * 100) / 100).toFixed(2)}%
               </span>
             </div>
             <div className="flex flex-col items-center">

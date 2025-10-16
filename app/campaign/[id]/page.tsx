@@ -24,15 +24,18 @@ import {
 } from "lucide-react";
 import { useCampaignStore } from "@/store/useCampaignStore";
 import formatCategory from "@/lib/helper/formatCategory";
+import { daysLeftFromNow } from "@/lib/helper/fetchCampaigns";
+import { useAccount } from "wagmi";
 
 export default function CampaignDetailPage(): JSX.Element {
   const { id } = useParams();
   const { fetchSingle } = useCampaignStore();
   const [campaign, setCampaign] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [userRole] = useState<"Admin" | "Member" | "Donor" | "Viewer">("Donor");
+  const [userRole, setUserRole] = useState<"Admin" | "Donor" | "">("");
   const [donations, setDonations] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const { address } = useAccount();
 
   useEffect(() => {
     async function load() {
@@ -41,6 +44,17 @@ export default function CampaignDetailPage(): JSX.Element {
       try {
         const fetched = await fetchSingle(Number(id));
         setCampaign(fetched);
+
+        if (fetched?.creator && address) {
+          try {
+            if (fetched.creator.toLowerCase() === address.toLowerCase()) {
+              setUserRole("Admin");
+            }
+          } catch (e) {
+            // Defensive: in case creator/address are not strings
+            console.warn("campaign creator/address compare failed", e);
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -74,13 +88,7 @@ export default function CampaignDetailPage(): JSX.Element {
   const progress = (campaign.totalDonations / campaign.goalAmount) * 100 || 0;
   const remainingBalance =
     campaign.totalDonations - (campaign.totalExpenses || 0);
-  const daysLeft = Math.max(
-    0,
-    Math.ceil(
-      (new Date(campaign.deadline).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24)
-    )
-  );
+  const daysLeft = daysLeftFromNow(campaign.deadline);
 
   const getStatusColor = (status: string): string => {
     switch (status) {
@@ -192,10 +200,13 @@ export default function CampaignDetailPage(): JSX.Element {
                     Fundraising Progress
                   </span>
                   <span className="text-lg font-bold text-green-400">
-                    {Math.round(progress)}%
+                    {(Math.trunc(progress * 100) / 100).toFixed(2) + "%"}
                   </span>
                 </div>
-                <Progress value={progress} className="h-3 bg-gray-800" />
+                <Progress
+                  value={progress}
+                  className="h-3 bg-gray-800"
+                />
                 <div className="flex justify-between mt-2 text-xs text-gray-500">
                   <span>
                     ${campaign.totalDonations.toLocaleString()} raised
@@ -240,7 +251,10 @@ export default function CampaignDetailPage(): JSX.Element {
         </div>
 
         {/* Tabs (Donations/Expenses/Supporters) */}
-        <Tabs defaultValue="donations" className="space-y-6">
+        <Tabs
+          defaultValue="donations"
+          className="space-y-6"
+        >
           <TabsList className="bg-gray-950/50 border border-green-900/30">
             <TabsTrigger value="donations">
               Donations ({donations.length})
@@ -256,7 +270,10 @@ export default function CampaignDetailPage(): JSX.Element {
           <TabsContent value="donations">
             {donations.length > 0 ? (
               donations.map((donation) => (
-                <DonationCard key={donation.id} donation={donation} />
+                <DonationCard
+                  key={donation.id}
+                  donation={donation}
+                />
               ))
             ) : (
               <Card className="bg-gray-950/50 border-green-900/30">
