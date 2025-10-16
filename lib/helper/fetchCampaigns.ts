@@ -147,6 +147,32 @@ export async function fetchCampaigns(
 
       const metadata = await fetchIpfsMetadata(ipfsHash);
 
+      // Map numeric on-chain state -> human-friendly string
+      const mapState = (num: number | bigint) => {
+        const n = Number(num);
+        switch (n) {
+          case 0:
+            return "Pending" as const;
+          case 1:
+            return "Active" as const;
+          case 2:
+            return "Cancelled" as const;
+          case 3:
+            return "Completed" as const;
+          default:
+            return "Pending" as const;
+        }
+      };
+
+      let stateStr = mapState(state);
+      try {
+        if (daysLeftFromNow(Number(new Date(metadata?.deadline))) <= 0) {
+          stateStr = "Completed";
+        }
+      } catch (e) {
+        // ignore
+      }
+
       return {
         id: Number(id),
         creator,
@@ -160,7 +186,7 @@ export async function fetchCampaigns(
         category: metadata?.category || category,
         ipfsHash,
         imageUrl: metadata?.imageUrl || `/category/${category}.jpg`,
-        state: Number(state),
+        state: stateStr,
         supportCount: Number(supportCount),
         verified: metadata?.verified || false,
         supporterThreshold: metadata?.supporterThreshold || 50,
@@ -218,6 +244,31 @@ export async function fetchCampaignById(id: number): Promise<Campaign | null> {
 
     const metadata = await fetchIpfsMetadata(ipfsHash);
 
+    const mapState = (num: number | bigint) => {
+      const n = Number(num);
+      switch (n) {
+        case 0:
+          return "Pending" as const;
+        case 1:
+          return "Active" as const;
+        case 2:
+          return "Cancelled" as const;
+        case 3:
+          return "Completed" as const;
+        default:
+          return "Pending" as const;
+      }
+    };
+
+    let stateStr = mapState(state);
+    try {
+      if (daysLeftFromNow(Number(new Date(metadata?.deadline))) <= 0) {
+        stateStr = "Completed";
+      }
+    } catch (e) {
+      // ignore
+    }
+
     return {
       id: Number(campaignId),
       creator,
@@ -230,7 +281,7 @@ export async function fetchCampaignById(id: number): Promise<Campaign | null> {
       category: metadata?.category || category,
       ipfsHash,
       imageUrl: metadata?.imageUrl || `/category/${category}.jpg`,
-      state: Number(state),
+      state: stateStr,
       supportCount: Number(supportCount),
       verified: metadata?.verified || false,
       supporterThreshold: metadata?.supporterThreshold || 50,

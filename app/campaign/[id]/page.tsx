@@ -52,7 +52,6 @@ export default function CampaignDetailPage(): JSX.Element {
               setUserRole("Admin");
             }
           } catch (e) {
-            // Defensive: in case creator/address are not strings
             console.warn("campaign creator/address compare failed", e);
           }
         }
